@@ -1,0 +1,111 @@
+import 'package:flutter/material.dart';
+
+import '../theme/app_theme.dart';
+import 'json_utils.dart';
+
+enum DeployState { queued, inProgress, finished, failed, cancelled, unknown }
+
+class Deployment {
+  const Deployment({
+    required this.deploymentUuid,
+    required this.applicationName,
+    required this.status,
+    required this.commit,
+    required this.commitMessage,
+    required this.isWebhook,
+    required this.isApi,
+    required this.forceRebuild,
+    required this.serverName,
+    required this.logs,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  final String deploymentUuid;
+  final String applicationName;
+  final DeployState status;
+  final String commit;
+  final String commitMessage;
+  final bool isWebhook;
+  final bool isApi;
+  final bool forceRebuild;
+  final String serverName;
+
+  /// Raw deployment log payload (JSON-encoded line array) when fetched by uuid.
+  final String logs;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  String get shortCommit => commit.length > 7 ? commit.substring(0, 7) : commit;
+
+  bool get isRunning =>
+      status == DeployState.queued || status == DeployState.inProgress;
+
+  factory Deployment.fromJson(Map<String, dynamic> json) {
+    return Deployment(
+      deploymentUuid: asStringOr(json['deployment_uuid'] ?? json['uuid']),
+      applicationName: asStringOr(json['application_name'], 'Application'),
+      status: _state(asStringOr(json['status'])),
+      commit: asStringOr(json['commit']),
+      commitMessage: asStringOr(json['commit_message']),
+      isWebhook: asBool(json['is_webhook']),
+      isApi: asBool(json['is_api']),
+      forceRebuild: asBool(json['force_rebuild']),
+      serverName: asStringOr(json['server_name']),
+      logs: asStringOr(json['logs']),
+      createdAt: asDate(json['created_at']),
+      updatedAt: asDate(json['updated_at']),
+    );
+  }
+
+  static DeployState _state(String s) {
+    switch (s.toLowerCase()) {
+      case 'queued':
+        return DeployState.queued;
+      case 'in_progress':
+        return DeployState.inProgress;
+      case 'finished':
+        return DeployState.finished;
+      case 'failed':
+        return DeployState.failed;
+      case 'cancelled-by-user':
+      case 'cancelled':
+        return DeployState.cancelled;
+      default:
+        return DeployState.unknown;
+    }
+  }
+
+  String get statusLabel {
+    switch (status) {
+      case DeployState.queued:
+        return 'Queued';
+      case DeployState.inProgress:
+        return 'In progress';
+      case DeployState.finished:
+        return 'Finished';
+      case DeployState.failed:
+        return 'Failed';
+      case DeployState.cancelled:
+        return 'Cancelled';
+      case DeployState.unknown:
+        return 'Unknown';
+    }
+  }
+
+  Color get statusColor {
+    switch (status) {
+      case DeployState.finished:
+        return StatusColors.healthy;
+      case DeployState.failed:
+        return StatusColors.down;
+      case DeployState.cancelled:
+        return StatusColors.neutral;
+      case DeployState.queued:
+      case DeployState.inProgress:
+        return StatusColors.info;
+      case DeployState.unknown:
+        return StatusColors.neutral;
+    }
+  }
+}
