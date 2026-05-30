@@ -12,7 +12,9 @@ import '../../widgets/action_runner.dart';
 import '../../widgets/async_value_view.dart';
 import '../../widgets/env_var_editor.dart';
 import '../../widgets/log_console.dart';
+import '../../widgets/scheduled_tasks_editor.dart';
 import '../../widgets/status_badge.dart';
+import '../../widgets/storage_editor.dart';
 import '../deployments/deployment_detail_screen.dart';
 import 'detail_widgets.dart';
 
@@ -25,7 +27,7 @@ class ApplicationDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final app = ref.watch(applicationProvider(uuid));
     return DefaultTabController(
-      length: 5,
+      length: 7,
       child: Scaffold(
         appBar: AppBar(
           title: Text(app.value?.name ?? 'Application'),
@@ -43,6 +45,8 @@ class ApplicationDetailScreen extends ConsumerWidget {
               Tab(text: 'Environment'),
               Tab(text: 'Deployments'),
               Tab(text: 'Logs'),
+              Tab(text: 'Storage'),
+              Tab(text: 'Tasks'),
               Tab(text: 'Settings'),
             ],
           ),
@@ -56,6 +60,8 @@ class ApplicationDetailScreen extends ConsumerWidget {
               EnvVarEditor(kind: 'applications', uuid: uuid),
               _Deployments(uuid: uuid),
               _Logs(uuid: uuid),
+              StorageEditor(kind: 'applications', uuid: uuid),
+              ScheduledTasksEditor(kind: 'applications', uuid: uuid),
               _Settings(app: a),
             ],
           ),

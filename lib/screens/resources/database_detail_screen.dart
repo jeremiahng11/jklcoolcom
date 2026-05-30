@@ -7,8 +7,10 @@ import '../../providers/instances_provider.dart';
 import '../../providers/resource_providers.dart';
 import '../../widgets/action_runner.dart';
 import '../../widgets/async_value_view.dart';
+import '../../widgets/backups_editor.dart';
 import '../../widgets/env_var_editor.dart';
 import '../../widgets/status_badge.dart';
+import '../../widgets/storage_editor.dart';
 import 'detail_widgets.dart';
 
 class DatabaseDetailScreen extends ConsumerWidget {
@@ -20,7 +22,7 @@ class DatabaseDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final db = ref.watch(databaseProvider(uuid));
     return DefaultTabController(
-      length: 3,
+      length: 5,
       child: Scaffold(
         appBar: AppBar(
           title: Text(db.value?.name ?? 'Database'),
@@ -31,9 +33,13 @@ class DatabaseDetailScreen extends ConsumerWidget {
             ),
           ],
           bottom: const TabBar(
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
             tabs: [
               Tab(text: 'Overview'),
               Tab(text: 'Environment'),
+              Tab(text: 'Backups'),
+              Tab(text: 'Storage'),
               Tab(text: 'Settings'),
             ],
           ),
@@ -45,6 +51,8 @@ class DatabaseDetailScreen extends ConsumerWidget {
             children: [
               _Overview(db: d),
               EnvVarEditor(kind: 'databases', uuid: uuid),
+              BackupsEditor(uuid: uuid),
+              StorageEditor(kind: 'databases', uuid: uuid),
               _Settings(db: d),
             ],
           ),

@@ -1,13 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/application.dart';
+import '../models/backup.dart';
+import '../models/cloud.dart';
 import '../models/database.dart';
 import '../models/env_var.dart';
+import '../models/github_app.dart';
 import '../models/private_key.dart';
 import '../models/project.dart';
 import '../models/resource.dart';
+import '../models/scheduled_task.dart';
 import '../models/server.dart';
 import '../models/service.dart';
+import '../models/storage.dart';
 import '../models/team.dart';
 import 'instances_provider.dart';
 
@@ -78,6 +83,50 @@ final envsProvider = FutureProvider.family<List<EnvVar>, EnvKey>((
   if (client == null) return const [];
   return client.envs(key.kind, key.uuid);
 });
+
+final storagesProvider = FutureProvider.family<List<Storage>, EnvKey>((
+  ref,
+  key,
+) async {
+  final client = ref.watch(coolifyClientProvider);
+  if (client == null) return const [];
+  return client.storages(key.kind, key.uuid);
+});
+
+final scheduledTasksProvider =
+    FutureProvider.family<List<ScheduledTask>, EnvKey>((ref, key) async {
+      final client = ref.watch(coolifyClientProvider);
+      if (client == null) return const [];
+      return client.scheduledTasks(key.kind, key.uuid);
+    });
+
+final databaseBackupsProvider =
+    FutureProvider.family<List<DatabaseBackup>, String>((ref, uuid) async {
+      final client = ref.watch(coolifyClientProvider);
+      if (client == null) return const [];
+      return client.databaseBackups(uuid);
+    });
+
+final githubAppsProvider = FutureProvider<List<GithubApp>>((ref) async {
+  final client = ref.watch(coolifyClientProvider);
+  if (client == null) return const [];
+  return client.githubApps();
+});
+
+final cloudTokensProvider = FutureProvider<List<CloudToken>>((ref) async {
+  final client = ref.watch(coolifyClientProvider);
+  if (client == null) return const [];
+  return client.cloudTokens();
+});
+
+/// Hetzner option lists, keyed by kind: `locations`, `server-types`,
+/// `images`, `ssh-keys`.
+final hetznerOptionsProvider =
+    FutureProvider.family<List<HetznerOption>, String>((ref, kind) async {
+      final client = ref.watch(coolifyClientProvider);
+      if (client == null) return const [];
+      return client.hetznerOptions(kind);
+    });
 
 // Per-resource detail providers (keyed by uuid).
 

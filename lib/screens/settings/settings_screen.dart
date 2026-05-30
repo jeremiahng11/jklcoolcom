@@ -87,6 +87,13 @@ class SettingsScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/keys'),
           ),
+          ListTile(
+            leading: const Icon(Icons.cloud_outlined),
+            title: const Text('Cloud tokens & provisioning'),
+            subtitle: const Text('Provision Hetzner servers'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/cloud-tokens'),
+          ),
           const Divider(),
           _header(context, 'Appearance'),
           RadioGroup<ThemeMode>(

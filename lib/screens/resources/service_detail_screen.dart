@@ -8,7 +8,9 @@ import '../../providers/resource_providers.dart';
 import '../../widgets/action_runner.dart';
 import '../../widgets/async_value_view.dart';
 import '../../widgets/env_var_editor.dart';
+import '../../widgets/scheduled_tasks_editor.dart';
 import '../../widgets/status_badge.dart';
+import '../../widgets/storage_editor.dart';
 import 'detail_widgets.dart';
 
 class ServiceDetailScreen extends ConsumerWidget {
@@ -20,7 +22,7 @@ class ServiceDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final svc = ref.watch(serviceProvider(uuid));
     return DefaultTabController(
-      length: 3,
+      length: 5,
       child: Scaffold(
         appBar: AppBar(
           title: Text(svc.value?.name ?? 'Service'),
@@ -31,9 +33,13 @@ class ServiceDetailScreen extends ConsumerWidget {
             ),
           ],
           bottom: const TabBar(
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
             tabs: [
               Tab(text: 'Overview'),
               Tab(text: 'Environment'),
+              Tab(text: 'Storage'),
+              Tab(text: 'Tasks'),
               Tab(text: 'Settings'),
             ],
           ),
@@ -45,6 +51,8 @@ class ServiceDetailScreen extends ConsumerWidget {
             children: [
               _Overview(svc: s),
               EnvVarEditor(kind: 'services', uuid: uuid),
+              StorageEditor(kind: 'services', uuid: uuid),
+              ScheduledTasksEditor(kind: 'services', uuid: uuid),
               _Settings(svc: s),
             ],
           ),

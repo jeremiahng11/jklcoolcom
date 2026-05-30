@@ -4,16 +4,21 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/application.dart';
+import '../models/backup.dart';
+import '../models/cloud.dart';
 import '../models/database.dart';
 import '../models/deployment.dart';
 import '../models/env_var.dart';
+import '../models/github_app.dart';
 import '../models/instance.dart';
 import '../models/json_utils.dart';
 import '../models/private_key.dart';
 import '../models/project.dart';
 import '../models/resource.dart';
+import '../models/scheduled_task.dart';
 import '../models/server.dart';
 import '../models/service.dart';
+import '../models/storage.dart';
 import '../models/team.dart';
 import 'api_exception.dart';
 
@@ -320,9 +325,6 @@ class CoolifyClient {
   Future<String> createDatabase(DbEngine engine, Map<String, dynamic> body) =>
       _createUuid('/databases/${engine.slug}', body);
 
-  Future<List<Map<String, dynamic>>> databaseBackups(String uuid) async =>
-      _list(await _send('GET', '/databases/$uuid/backups'));
-
   // ---------------------------------------------------------------------------
   // Services
   // ---------------------------------------------------------------------------
@@ -448,6 +450,149 @@ class CoolifyClient {
 
   Future<void> deletePrivateKey(String uuid) =>
       _send('DELETE', '/security/keys/$uuid');
+
+  // ---------------------------------------------------------------------------
+  // Persistent storages (shared across applications/databases/services)
+  // ---------------------------------------------------------------------------
+
+  Future<List<Storage>> storages(String kind, String uuid) async => _list(
+    await _send('GET', '/$kind/$uuid/storages'),
+  ).map(Storage.fromJson).toList();
+
+  Future<void> createStorage(
+    String kind,
+    String uuid,
+    Map<String, dynamic> body,
+  ) => _send('POST', '/$kind/$uuid/storages', body: body);
+
+  Future<void> updateStorage(
+    String kind,
+    String uuid,
+    String storageUuid,
+    Map<String, dynamic> body,
+  ) => _send('PATCH', '/$kind/$uuid/storages/$storageUuid', body: body);
+
+  Future<void> deleteStorage(String kind, String uuid, String storageUuid) =>
+      _send('DELETE', '/$kind/$uuid/storages/$storageUuid');
+
+  // ---------------------------------------------------------------------------
+  // Scheduled tasks (applications & services)
+  // ---------------------------------------------------------------------------
+
+  Future<List<ScheduledTask>> scheduledTasks(String kind, String uuid) async =>
+      _list(
+        await _send('GET', '/$kind/$uuid/scheduled-tasks'),
+      ).map(ScheduledTask.fromJson).toList();
+
+  Future<void> createScheduledTask(
+    String kind,
+    String uuid,
+    Map<String, dynamic> body,
+  ) => _send('POST', '/$kind/$uuid/scheduled-tasks', body: body);
+
+  Future<void> updateScheduledTask(
+    String kind,
+    String uuid,
+    String taskUuid,
+    Map<String, dynamic> body,
+  ) => _send('PATCH', '/$kind/$uuid/scheduled-tasks/$taskUuid', body: body);
+
+  Future<void> deleteScheduledTask(String kind, String uuid, String taskUuid) =>
+      _send('DELETE', '/$kind/$uuid/scheduled-tasks/$taskUuid');
+
+  Future<List<Map<String, dynamic>>> scheduledTaskExecutions(
+    String kind,
+    String uuid,
+    String taskUuid,
+  ) async => _list(
+    await _send('GET', '/$kind/$uuid/scheduled-tasks/$taskUuid/executions'),
+  );
+
+  // ---------------------------------------------------------------------------
+  // Database backups
+  // ---------------------------------------------------------------------------
+
+  Future<List<DatabaseBackup>> databaseBackups(String uuid) async => _list(
+    await _send('GET', '/databases/$uuid/backups'),
+  ).map(DatabaseBackup.fromJson).toList();
+
+  Future<void> createDatabaseBackup(String uuid, Map<String, dynamic> body) =>
+      _send('POST', '/databases/$uuid/backups', body: body);
+
+  Future<void> updateDatabaseBackup(
+    String uuid,
+    String backupUuid,
+    Map<String, dynamic> body,
+  ) => _send('PATCH', '/databases/$uuid/backups/$backupUuid', body: body);
+
+  Future<void> deleteDatabaseBackup(String uuid, String backupUuid) =>
+      _send('DELETE', '/databases/$uuid/backups/$backupUuid');
+
+  Future<List<Map<String, dynamic>>> backupExecutions(
+    String uuid,
+    String backupUuid,
+  ) async => _list(
+    await _send('GET', '/databases/$uuid/backups/$backupUuid/executions'),
+  );
+
+  // ---------------------------------------------------------------------------
+  // GitHub apps (for private-GitHub-app deploys)
+  // ---------------------------------------------------------------------------
+
+  Future<List<GithubApp>> githubApps() async => _list(
+    await _send('GET', '/github-apps'),
+  ).map(GithubApp.fromJson).toList();
+
+  Future<List<String>> githubAppRepositories(int appId) async {
+    final data = await _send('GET', '/github-apps/$appId/repositories');
+    final list = data is Map ? data['repositories'] : data;
+    if (list is List) {
+      return list
+          .map((e) => e is Map ? asStringOr(e['name'] ?? e['full_name']) : '$e')
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+    return const [];
+  }
+
+  // ---------------------------------------------------------------------------
+  // Cloud provider tokens & Hetzner provisioning (Cloud-oriented)
+  // ---------------------------------------------------------------------------
+
+  Future<List<CloudToken>> cloudTokens() async => _list(
+    await _send('GET', '/cloud-tokens'),
+  ).map(CloudToken.fromJson).toList();
+
+  Future<String> createCloudToken(Map<String, dynamic> body) =>
+      _createUuid('/cloud-tokens', body);
+
+  Future<void> deleteCloudToken(String uuid) =>
+      _send('DELETE', '/cloud-tokens/$uuid');
+
+  Future<bool> validateCloudToken(String uuid) async {
+    try {
+      await _send('POST', '/cloud-tokens/$uuid/validate');
+      return true;
+    } on ApiException {
+      return false;
+    }
+  }
+
+  Future<List<HetznerOption>> hetznerOptions(String kind) async {
+    // kind: locations | server-types | images | ssh-keys
+    final data = await _send('GET', '/hetzner/$kind');
+    final list = data is Map ? (data[kind] ?? data['data']) : data;
+    if (list is List) {
+      return list
+          .whereType<Map<String, dynamic>>()
+          .map(HetznerOption.fromJson)
+          .toList();
+    }
+    return const [];
+  }
+
+  Future<String> provisionHetznerServer(Map<String, dynamic> body) =>
+      _createUuid('/servers/hetzner', body);
 
   // ---------------------------------------------------------------------------
   // Helpers

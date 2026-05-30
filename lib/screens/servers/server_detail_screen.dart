@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../models/server.dart';
 import '../../models/status.dart';
@@ -83,9 +84,44 @@ class ServerDetailScreen extends ConsumerWidget {
                 title: 'Description',
                 children: [Text(s.description)],
               ),
+            const SizedBox(height: 8),
+            DangerZone(
+              label: 'Remove server',
+              description:
+                  'Disconnect this server from Coolify. Resources on it are '
+                  'not deleted.',
+              onDelete: () => _delete(context, ref, s.uuid, s.name),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _delete(
+    BuildContext context,
+    WidgetRef ref,
+    String serverUuid,
+    String name,
+  ) async {
+    final client = ref.read(coolifyClientProvider);
+    if (client == null) return;
+    final ok = await confirmAction(
+      context,
+      title: 'Remove server',
+      message: 'Disconnect "$name" from Coolify?',
+      confirmLabel: 'Remove',
+      destructive: true,
+    );
+    if (!ok || !context.mounted) return;
+    final done = await runAction(
+      context,
+      action: () => client.deleteServer(serverUuid),
+      success: 'Server removed',
+    );
+    if (done && context.mounted) {
+      ref.invalidate(serversProvider);
+      context.pop();
+    }
   }
 }

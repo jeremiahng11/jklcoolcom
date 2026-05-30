@@ -18,16 +18,26 @@ class ServersScreen extends ConsumerWidget {
     final servers = ref.watch(serversProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Servers')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push('/servers/add'),
+        icon: const Icon(Icons.add),
+        label: const Text('Add server'),
+      ),
       body: AsyncValueView<List<Server>>(
         value: servers,
         onRetry: () => ref.invalidate(serversProvider),
         data: (list) {
           if (list.isEmpty) {
-            return const EmptyState(
+            return EmptyState(
               icon: Icons.dns_outlined,
               title: 'No servers',
               message:
                   'Servers connected to this Coolify instance appear here.',
+              action: FilledButton.icon(
+                onPressed: () => context.push('/servers/add'),
+                icon: const Icon(Icons.add),
+                label: const Text('Add server'),
+              ),
             );
           }
           return RefreshIndicator(

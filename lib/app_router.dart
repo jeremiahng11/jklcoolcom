@@ -15,8 +15,11 @@ import 'screens/resources/create/create_service_screen.dart';
 import 'screens/resources/database_detail_screen.dart';
 import 'screens/resources/resources_screen.dart';
 import 'screens/resources/service_detail_screen.dart';
+import 'screens/servers/add_server_screen.dart';
 import 'screens/servers/server_detail_screen.dart';
 import 'screens/servers/servers_screen.dart';
+import 'screens/settings/cloud_tokens_screen.dart';
+import 'screens/servers/hetzner_provision_screen.dart';
 import 'screens/settings/private_keys_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/settings/team_screen.dart';
@@ -88,6 +91,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             ServiceDetailScreen(uuid: state.pathParameters['uuid']!),
       ),
       GoRoute(path: '/servers', builder: (_, _) => const ServersScreen()),
+      GoRoute(path: '/servers/add', builder: (_, _) => const AddServerScreen()),
+      GoRoute(
+        path: '/servers/hetzner',
+        builder: (_, _) => const HetznerProvisionScreen(),
+      ),
       GoRoute(
         path: '/servers/:uuid',
         builder: (_, state) =>
@@ -95,6 +103,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/projects', builder: (_, _) => const ProjectsScreen()),
       GoRoute(path: '/keys', builder: (_, _) => const PrivateKeysScreen()),
+      GoRoute(
+        path: '/cloud-tokens',
+        builder: (_, _) => const CloudTokensScreen(),
+      ),
       GoRoute(path: '/team', builder: (_, _) => const TeamScreen()),
       StatefulShellRoute.indexedStack(
         builder: (_, _, navigationShell) =>

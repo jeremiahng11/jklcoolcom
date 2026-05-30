@@ -40,6 +40,8 @@ class _CreateApplicationScreenState
   final _imageTag = TextEditingController(text: 'latest');
   final _dockerfile = TextEditingController();
   bool _instantDeploy = true;
+  String? _privateKeyUuid;
+  String? _githubAppUuid;
 
   @override
   void dispose() {
@@ -120,18 +122,20 @@ class _CreateApplicationScreenState
                 prefixIcon: Icon(Icons.lan_outlined),
               ),
             ),
-            if (_source == AppSource.privateDeployKey ||
-                _source == AppSource.privateGithubApp)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Text(
-                  _source == AppSource.privateDeployKey
-                      ? 'Note: requires an existing private key (private_key_uuid). '
-                            'Add one under Settings → SSH keys first.'
-                      : 'Note: requires a connected GitHub App (github_app_uuid).',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+            if (_source == AppSource.privateDeployKey) ...[
+              const SizedBox(height: 12),
+              _PrivateKeyPicker(
+                value: _privateKeyUuid,
+                onChanged: (v) => setState(() => _privateKeyUuid = v),
               ),
+            ],
+            if (_source == AppSource.privateGithubApp) ...[
+              const SizedBox(height: 12),
+              _GithubAppPicker(
+                value: _githubAppUuid,
+                onChanged: (v) => setState(() => _githubAppUuid = v),
+              ),
+            ],
           ],
           if (_source == AppSource.dockerImage) ...[
             TextField(
@@ -207,20 +211,30 @@ class _CreateApplicationScreenState
         call = () => client.createPublicApp(body);
         break;
       case AppSource.privateDeployKey:
+        if (_privateKeyUuid == null) {
+          _snack('Select an SSH private key.');
+          return;
+        }
         body.addAll({
           'git_repository': _repo.text.trim(),
           'git_branch': _branch.text.trim(),
           'build_pack': 'nixpacks',
           'ports_exposes': _ports.text.trim(),
+          'private_key_uuid': _privateKeyUuid,
         });
         call = () => client.createPrivateDeployKeyApp(body);
         break;
       case AppSource.privateGithubApp:
+        if (_githubAppUuid == null) {
+          _snack('Select a connected GitHub App.');
+          return;
+        }
         body.addAll({
           'git_repository': _repo.text.trim(),
           'git_branch': _branch.text.trim(),
           'build_pack': 'nixpacks',
           'ports_exposes': _ports.text.trim(),
+          'github_app_uuid': _githubAppUuid,
         });
         call = () => client.createPrivateGithubApp(body);
         break;
@@ -253,4 +267,84 @@ class _CreateApplicationScreenState
 
   void _snack(String m) =>
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
+}
+
+class _PrivateKeyPicker extends ConsumerWidget {
+  const _PrivateKeyPicker({required this.value, required this.onChanged});
+
+  final String? value;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final keys = ref.watch(privateKeysProvider);
+    return keys.when(
+      data: (list) {
+        if (list.isEmpty) {
+          return const Text(
+            'No SSH keys yet. Add one under Settings → SSH keys first.',
+          );
+        }
+        return DropdownButtonFormField<String>(
+          initialValue: value,
+          isExpanded: true,
+          decoration: const InputDecoration(
+            labelText: 'SSH private key',
+            prefixIcon: Icon(Icons.key_outlined),
+          ),
+          items: list
+              .map(
+                (k) => DropdownMenuItem(
+                  value: k.uuid,
+                  child: Text(k.name, overflow: TextOverflow.ellipsis),
+                ),
+              )
+              .toList(),
+          onChanged: onChanged,
+        );
+      },
+      loading: () => const LinearProgressIndicator(),
+      error: (e, _) => Text('Failed to load keys: $e'),
+    );
+  }
+}
+
+class _GithubAppPicker extends ConsumerWidget {
+  const _GithubAppPicker({required this.value, required this.onChanged});
+
+  final String? value;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final apps = ref.watch(githubAppsProvider);
+    return apps.when(
+      data: (list) {
+        if (list.isEmpty) {
+          return const Text(
+            'No GitHub Apps connected. Connect one in the Coolify dashboard first.',
+          );
+        }
+        return DropdownButtonFormField<String>(
+          initialValue: value,
+          isExpanded: true,
+          decoration: const InputDecoration(
+            labelText: 'GitHub App',
+            prefixIcon: Icon(Icons.code),
+          ),
+          items: list
+              .map(
+                (a) => DropdownMenuItem(
+                  value: a.uuid,
+                  child: Text(a.name, overflow: TextOverflow.ellipsis),
+                ),
+              )
+              .toList(),
+          onChanged: onChanged,
+        );
+      },
+      loading: () => const LinearProgressIndicator(),
+      error: (e, _) => Text('Failed to load GitHub Apps: $e'),
+    );
+  }
 }
