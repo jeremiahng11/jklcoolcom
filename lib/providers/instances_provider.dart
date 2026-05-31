@@ -60,6 +60,8 @@ class InstancesNotifier extends AsyncNotifier<InstancesState> {
 
   InstanceStore get _store => ref.read(instanceStoreProvider);
 
+  // Mutate state in place (rather than invalidateSelf + reload-from-disk) so
+  // saving/switching doesn't flash a loading state or churn the router/client.
   Future<void> addOrUpdate(
     CoolifyInstance instance, {
     String? token,
@@ -67,20 +69,61 @@ class InstancesNotifier extends AsyncNotifier<InstancesState> {
   }) async {
     await _store.save(instance, token: token);
     if (makeActive) await _store.setActiveInstanceId(instance.id);
-    ref.invalidateSelf();
-    await future;
+
+    final current =
+        state.value ??
+        const InstancesState(instances: [], tokens: {}, activeId: null);
+    final instances = [...current.instances];
+    final idx = instances.indexWhere((i) => i.id == instance.id);
+    if (idx >= 0) {
+      instances[idx] = instance;
+    } else {
+      instances.add(instance);
+    }
+    final tokens = {...current.tokens};
+    if (token != null && token.isNotEmpty) tokens[instance.id] = token;
+
+    state = AsyncData(
+      InstancesState(
+        instances: instances,
+        tokens: tokens,
+        activeId: makeActive ? instance.id : (current.activeId ?? instance.id),
+      ),
+    );
   }
 
   Future<void> setActive(String id) async {
     await _store.setActiveInstanceId(id);
-    ref.invalidateSelf();
-    await future;
+    final current = state.value;
+    if (current == null) {
+      ref.invalidateSelf();
+      return;
+    }
+    state = AsyncData(
+      InstancesState(
+        instances: current.instances,
+        tokens: current.tokens,
+        activeId: id,
+      ),
+    );
   }
 
   Future<void> remove(String id) async {
     await _store.delete(id);
-    ref.invalidateSelf();
-    await future;
+    final current = state.value;
+    if (current == null) {
+      ref.invalidateSelf();
+      return;
+    }
+    final instances = current.instances.where((i) => i.id != id).toList();
+    final tokens = {...current.tokens}..remove(id);
+    var activeId = current.activeId;
+    if (activeId == id) {
+      activeId = instances.isNotEmpty ? instances.first.id : null;
+    }
+    state = AsyncData(
+      InstancesState(instances: instances, tokens: tokens, activeId: activeId),
+    );
   }
 }
 

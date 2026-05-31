@@ -18,7 +18,6 @@ class SettingsScreen extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
     final active = ref.watch(activeInstanceProvider);
     final version = ref.watch(versionProvider);
-    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -46,16 +45,6 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: Text(active?.host ?? 'Add a Coolify instance'),
             trailing: const Icon(Icons.swap_horiz),
             onTap: () => showInstanceSwitcher(context),
-          ),
-          version.maybeWhen(
-            data: (v) => v.isEmpty
-                ? const SizedBox.shrink()
-                : ListTile(
-                    leading: const Icon(Icons.info_outline),
-                    title: const Text('Coolify version'),
-                    trailing: Text('v$v', style: theme.textTheme.bodyMedium),
-                  ),
-            orElse: () => const SizedBox.shrink(),
           ),
           ListTile(
             leading: const Icon(Icons.add),
@@ -150,10 +139,16 @@ class SettingsScreen extends ConsumerWidget {
               'read:sensitive.',
             ),
           ),
-          const ListTile(
-            leading: Icon(Icons.flutter_dash),
-            title: Text('Coolify Companion'),
-            subtitle: Text('Version 1.0.0'),
+          ListTile(
+            leading: const Icon(Icons.flutter_dash),
+            title: const Text('Coolify Companion'),
+            subtitle: Text(
+              version.maybeWhen(
+                data: (v) =>
+                    v.isEmpty ? 'App v1.0.0' : 'App v1.0.0  ·  Coolify v$v',
+                orElse: () => 'App v1.0.0',
+              ),
+            ),
           ),
         ],
       ),
