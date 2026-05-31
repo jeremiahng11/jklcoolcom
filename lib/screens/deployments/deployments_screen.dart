@@ -205,8 +205,6 @@ class _DeploymentTile extends ConsumerWidget {
       line2 = _fmt(d.updatedAt ?? d.createdAt);
     }
 
-    final canRedeploy = !running && d.appUuid.isNotEmpty;
-
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Card(
@@ -256,13 +254,67 @@ class _DeploymentTile extends ConsumerWidget {
           ),
           trailing: PopupMenuButton<String>(
             onSelected: (v) {
-              if (v == 'logs') _openLogs(context);
-              if (v == 'redeploy') _redeploy(context, ref);
+              switch (v) {
+                case 'logs':
+                  _openLogs(context);
+                case 'redeploy':
+                  _redeploy(context, ref);
+                case 'restart':
+                  _lifecycle(context, ref, 'restart');
+                case 'stop':
+                  _lifecycle(context, ref, 'stop');
+                case 'start':
+                  _lifecycle(context, ref, 'start');
+              }
             },
             itemBuilder: (_) => [
-              const PopupMenuItem(value: 'logs', child: Text('View logs')),
-              if (canRedeploy)
-                const PopupMenuItem(value: 'redeploy', child: Text('Redeploy')),
+              const PopupMenuItem(
+                value: 'logs',
+                child: ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.article_outlined),
+                  title: Text('View logs'),
+                ),
+              ),
+              if (d.appUuid.isNotEmpty) ...[
+                const PopupMenuItem(
+                  value: 'redeploy',
+                  child: ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.rocket_launch_outlined),
+                    title: Text('Redeploy'),
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'restart',
+                  child: ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.restart_alt),
+                    title: Text('Restart'),
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'start',
+                  child: ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.play_arrow),
+                    title: Text('Start / resume'),
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'stop',
+                  child: ListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.stop),
+                    title: Text('Stop'),
+                  ),
+                ),
+              ],
             ],
           ),
           onTap: () => _openLogs(context),
@@ -294,6 +346,40 @@ class _DeploymentTile extends ConsumerWidget {
       action: () => client.deploy(uuid: deployment.appUuid),
       success: 'Deployment triggered',
     );
+    if (done) {
+      ref.invalidate(runningDeploymentsProvider);
+      ref.invalidate(recentDeploymentsProvider);
+    }
+  }
+
+  /// Application lifecycle actions on the deployment's app: restart/stop/start.
+  Future<void> _lifecycle(
+    BuildContext context,
+    WidgetRef ref,
+    String action,
+  ) async {
+    final client = ref.read(coolifyClientProvider);
+    if (client == null) return;
+    final app = deployment.appUuid;
+    final name = deployment.applicationName;
+
+    if (action == 'stop') {
+      final ok = await confirmAction(
+        context,
+        title: 'Stop application',
+        message: 'Stop "$name"?',
+        confirmLabel: 'Stop',
+      );
+      if (!ok || !context.mounted) return;
+    }
+
+    final (future, msg) = switch (action) {
+      'restart' => (client.restartApplication(app), 'Restarting $name'),
+      'stop' => (client.stopApplication(app), 'Stopping $name'),
+      _ => (client.startApplication(app), 'Starting $name'),
+    };
+
+    final done = await runAction(context, action: () => future, success: msg);
     if (done) {
       ref.invalidate(runningDeploymentsProvider);
       ref.invalidate(recentDeploymentsProvider);

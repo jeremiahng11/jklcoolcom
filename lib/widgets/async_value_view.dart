@@ -22,8 +22,13 @@ class AsyncValueView<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Once we have data, keep showing it through background reloads and
+    // transient errors so polling/auto-refresh never blanks the screen.
+    if (value.hasValue) {
+      return data(value.value as T);
+    }
     return value.when(
-      skipLoadingOnRefresh: false,
+      skipLoadingOnRefresh: true,
       skipLoadingOnReload: true,
       data: data,
       loading: () => Center(
