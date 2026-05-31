@@ -2,21 +2,26 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../providers/splash_provider.dart';
 
 /// Shows an animated splash on first launch for ~3s, then fades out to reveal
 /// [child]. The app builds underneath while the splash plays, so the splash
 /// also masks initial load. Wrapped via MaterialApp.builder so it sits above
-/// everything (including the lock gate).
-class SplashGate extends StatefulWidget {
+/// everything (including the lock gate). It marks [splashDoneProvider] when it
+/// begins fading so the lock prompt waits for the splash instead of appearing
+/// over it.
+class SplashGate extends ConsumerStatefulWidget {
   const SplashGate({super.key, required this.child});
 
   final Widget child;
 
   @override
-  State<SplashGate> createState() => _SplashGateState();
+  ConsumerState<SplashGate> createState() => _SplashGateState();
 }
 
-class _SplashGateState extends State<SplashGate> {
+class _SplashGateState extends ConsumerState<SplashGate> {
   static const _hold = Duration(seconds: 3);
   static const _fade = Duration(milliseconds: 650);
 
@@ -29,7 +34,10 @@ class _SplashGateState extends State<SplashGate> {
     super.initState();
     _timers.add(
       Timer(_hold, () {
-        if (mounted) setState(() => _fadingOut = true);
+        if (!mounted) return;
+        setState(() => _fadingOut = true);
+        // Tell the lock gate it may prompt now — as the splash fades out.
+        ref.read(splashDoneProvider.notifier).complete();
       }),
     );
     _timers.add(
@@ -113,13 +121,29 @@ class _SplashScreenState extends State<SplashScreen>
         // Electric flicker: layered sine waves for a lively, lightning feel.
         final t = _pulse.value;
         final flicker =
-            (0.6 +
-                    0.25 * math.sin(t * math.pi * 2 * 3) +
-                    0.15 * math.sin(t * math.pi * 2 * 7.3))
+            (0.55 +
+                    0.3 * math.sin(t * math.pi * 2 * 3.1) +
+                    0.18 * math.sin(t * math.pi * 2 * 8.7))
                 .clamp(0.0, 1.0);
-        // A bright "strike" flash that peaks just as the bolt lands.
         final e = _enter.value;
-        final flash = (1 - ((e - 0.22).abs() / 0.16)).clamp(0.0, 1.0);
+
+        // A few lightning "strikes" during entrance (triangular flashes).
+        double strike(double center, double width) =>
+            (1 - ((e - center).abs() / width)).clamp(0.0, 1.0);
+        final flash = math.max(
+          strike(0.16, 0.06),
+          math.max(strike(0.27, 0.05), strike(0.40, 0.06)),
+        );
+
+        // Ignition: the bolt flickers on like a struck arc before going steady.
+        final ignite = e < 0.5 ? (0.35 + 0.65 * flicker) : 1.0;
+        final boltOpacity = (_boltFade.value * ignite).clamp(0.0, 1.0);
+
+        // Tiny electric jitter, stronger during ignition.
+        final jitter = (e < 0.5 ? 2.0 : 0.8) * math.sin(t * math.pi * 2 * 11);
+
+        // Glow brightens on each strike.
+        final glow = (flicker * 0.7 + flash * 0.7).clamp(0.0, 1.0);
 
         return Stack(
           fit: StackFit.expand,
@@ -143,12 +167,15 @@ class _SplashScreenState extends State<SplashScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Opacity(
-                    opacity: _boltFade.value.clamp(0.0, 1.0),
-                    child: Transform.scale(
-                      scale: 0.6 + 0.4 * _boltScale.value.clamp(0.0, 1.2),
-                      child: CustomPaint(
-                        size: const Size(120, 120),
-                        painter: _BoltPainter(glow: flicker),
+                    opacity: boltOpacity,
+                    child: Transform.translate(
+                      offset: Offset(jitter, 0),
+                      child: Transform.scale(
+                        scale: 0.6 + 0.4 * _boltScale.value.clamp(0.0, 1.2),
+                        child: CustomPaint(
+                          size: const Size(120, 120),
+                          painter: _BoltPainter(glow: glow),
+                        ),
                       ),
                     ),
                   ),

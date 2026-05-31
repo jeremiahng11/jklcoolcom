@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/lock_provider.dart';
+import '../providers/splash_provider.dart';
 
 /// Wraps the whole app (via MaterialApp.builder). When the biometric lock is
 /// enabled and engaged, it overlays an opaque lock screen on top of [child]
@@ -39,6 +40,8 @@ class _LockGateState extends ConsumerState<LockGate>
 
   Future<void> _maybePrompt() async {
     if (_prompting) return;
+    // Wait for the launch splash to finish so the OS prompt doesn't pop over it.
+    if (!ref.read(splashDoneProvider)) return;
     final state = ref.read(appLockProvider);
     if (!state.isLocked) return;
     _prompting = true;
@@ -59,6 +62,12 @@ class _LockGateState extends ConsumerState<LockGate>
     // so the user never has to tap "Unlock" first.
     ref.listen<AppLockState>(appLockProvider, (prev, next) {
       if (next.isLocked && !(prev?.isLocked ?? false)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _maybePrompt());
+      }
+    });
+    // When the splash finishes, prompt if we're already locked.
+    ref.listen<bool>(splashDoneProvider, (prev, done) {
+      if (done && (prev != true)) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _maybePrompt());
       }
     });
