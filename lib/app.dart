@@ -25,6 +25,9 @@ class CoolifyCompanionApp extends ConsumerWidget {
       theme: AppTheme.light(accent),
       darkTheme: AppTheme.dark(accent),
       themeMode: themeMode,
+      // Re-tint instantly when the active account changes — no theme animation
+      // flash on save / account switch.
+      themeAnimationDuration: Duration.zero,
       routerConfig: router,
       builder: (context, child) =>
           SplashGate(child: LockGate(child: child ?? const SizedBox())),

@@ -54,6 +54,14 @@ class _LockGateState extends ConsumerState<LockGate>
 
   @override
   Widget build(BuildContext context) {
+    // The lock flag is loaded from prefs asynchronously, so it can engage after
+    // initState's prompt already ran. Auto-prompt the moment it becomes locked
+    // so the user never has to tap "Unlock" first.
+    ref.listen<AppLockState>(appLockProvider, (prev, next) {
+      if (next.isLocked && !(prev?.isLocked ?? false)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _maybePrompt());
+      }
+    });
     final locked = ref.watch(appLockProvider).isLocked;
     return Stack(
       children: [

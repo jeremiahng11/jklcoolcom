@@ -28,9 +28,19 @@ final _rootKey = GlobalKey<NavigatorState>();
 final _shellKeys = List.generate(4, (_) => GlobalKey<NavigatorState>());
 
 final routerProvider = Provider<GoRouter>((ref) {
-  // Rebuild routing decisions whenever the set of accounts changes.
+  // Only re-evaluate routing when accounts go empty <-> non-empty (the only
+  // thing redirect cares about). Refreshing on every label/accent/token edit
+  // caused the current screen to rebuild — a flicker on Save.
   final refresh = ValueNotifier<int>(0);
-  ref.listen(instancesProvider, (_, _) => refresh.value++);
+  var hadInstances =
+      ref.read(instancesProvider).value?.instances.isNotEmpty ?? false;
+  ref.listen(instancesProvider, (_, next) {
+    final now = next.value?.instances.isNotEmpty ?? false;
+    if (now != hadInstances) {
+      hadInstances = now;
+      refresh.value++;
+    }
+  });
   ref.onDispose(refresh.dispose);
 
   return GoRouter(

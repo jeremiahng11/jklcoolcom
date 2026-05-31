@@ -107,84 +107,96 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: RadialGradient(
-          center: Alignment(0, -0.2),
-          radius: 1.1,
-          colors: [Color(0xFF9D6BFF), Color(0xFF6D28D4), Color(0xFF3B1E73)],
-          stops: [0.0, 0.55, 1.0],
-        ),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    return AnimatedBuilder(
+      animation: Listenable.merge([_enter, _pulse]),
+      builder: (context, _) {
+        // Electric flicker: layered sine waves for a lively, lightning feel.
+        final t = _pulse.value;
+        final flicker =
+            (0.6 +
+                    0.25 * math.sin(t * math.pi * 2 * 3) +
+                    0.15 * math.sin(t * math.pi * 2 * 7.3))
+                .clamp(0.0, 1.0);
+        // A bright "strike" flash that peaks just as the bolt lands.
+        final e = _enter.value;
+        final flash = (1 - ((e - 0.22).abs() / 0.16)).clamp(0.0, 1.0);
+
+        return Stack(
+          fit: StackFit.expand,
           children: [
-            AnimatedBuilder(
-              animation: Listenable.merge([_enter, _pulse]),
-              builder: (context, _) {
-                final pulse = 0.5 + 0.5 * math.sin(_pulse.value * math.pi);
-                return Opacity(
-                  opacity: _boltFade.value.clamp(0.0, 1.0),
-                  child: Transform.scale(
-                    scale: 0.6 + 0.4 * _boltScale.value.clamp(0.0, 1.2),
-                    child: CustomPaint(
-                      size: const Size(120, 120),
-                      painter: _BoltPainter(glow: pulse),
-                    ),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 28),
-            FadeTransition(
-              opacity: _titleFade,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0, 0.4),
-                  end: Offset.zero,
-                ).animate(_titleFade),
-                child: Column(
-                  children: [
-                    const Text(
-                      'Coolify Companion',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'manage · monitor · deploy',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.7),
-                        fontSize: 13,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment(0, -0.2),
+                  radius: 1.1,
+                  colors: [
+                    Color(0xFF9D6BFF),
+                    Color(0xFF6D28D4),
+                    Color(0xFF3B1E73),
                   ],
+                  stops: [0.0, 0.55, 1.0],
                 ),
               ),
             ),
-            const SizedBox(height: 40),
-            FadeTransition(
-              opacity: _titleFade,
-              child: SizedBox(
-                width: 28,
-                height: 28,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  valueColor: AlwaysStoppedAnimation(
-                    Colors.white.withValues(alpha: 0.85),
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Opacity(
+                    opacity: _boltFade.value.clamp(0.0, 1.0),
+                    child: Transform.scale(
+                      scale: 0.6 + 0.4 * _boltScale.value.clamp(0.0, 1.2),
+                      child: CustomPaint(
+                        size: const Size(120, 120),
+                        painter: _BoltPainter(glow: flicker),
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 28),
+                  FadeTransition(
+                    opacity: _titleFade,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0, 0.4),
+                        end: Offset.zero,
+                      ).animate(_titleFade),
+                      child: Column(
+                        children: [
+                          const Text(
+                            'Coolify Companion',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'manage · monitor · deploy',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 13,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+            // Lightning flash overlay.
+            if (flash > 0.01)
+              IgnorePointer(
+                child: ColoredBox(
+                  color: Colors.white.withValues(alpha: 0.55 * flash),
+                ),
+              ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 }
