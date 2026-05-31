@@ -53,18 +53,11 @@ class DeploymentDetailScreen extends ConsumerWidget {
           children: [
             _Meta(deployment: d),
             const Divider(height: 1),
-            Expanded(child: LogConsole(text: _decodeLogs(d.logs))),
+            Expanded(child: LogConsole(text: d.logsText)),
           ],
         ),
       ),
     );
-  }
-
-  /// Deployment logs come back as a JSON array string of `{output,...}` lines;
-  /// fall back to raw text when it isn't JSON.
-  String _decodeLogs(String logs) {
-    if (logs.trim().isEmpty) return '';
-    return logs;
   }
 }
 

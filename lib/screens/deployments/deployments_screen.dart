@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../models/deployment.dart';
 import '../../providers/deployments_provider.dart';
@@ -19,14 +20,19 @@ class DeploymentsScreen extends ConsumerStatefulWidget {
 class _DeploymentsScreenState extends ConsumerState<DeploymentsScreen>
     with AutoRefreshMixin {
   @override
-  Duration get refreshInterval => const Duration(seconds: 8);
+  Duration get refreshInterval => const Duration(seconds: 10);
 
   @override
-  void onAutoRefresh() => ref.invalidate(runningDeploymentsProvider);
+  void onAutoRefresh() {
+    ref.invalidate(runningDeploymentsProvider);
+    ref.invalidate(recentDeploymentsProvider);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final deployments = ref.watch(runningDeploymentsProvider);
+    final running = ref.watch(runningDeploymentsProvider);
+    final recent = ref.watch(recentDeploymentsProvider);
+
     return Scaffold(
       appBar: AppBar(
         leadingWidth: 56,
@@ -37,57 +43,122 @@ class _DeploymentsScreenState extends ConsumerState<DeploymentsScreen>
         ],
       ),
       body: AsyncValueView<List<Deployment>>(
-        value: deployments,
-        onRetry: () => ref.invalidate(runningDeploymentsProvider),
-        data: (list) {
-          if (list.isEmpty) {
+        value: recent,
+        loadingLabel: 'Loading deployments…',
+        onRetry: () {
+          ref.invalidate(recentDeploymentsProvider);
+          ref.invalidate(runningDeploymentsProvider);
+        },
+        data: (recentList) {
+          final runningList = running.value ?? const <Deployment>[];
+          // Avoid showing the same deployment in both sections.
+          final runningUuids = runningList.map((d) => d.deploymentUuid).toSet();
+          final history = recentList
+              .where((d) => !runningUuids.contains(d.deploymentUuid))
+              .toList();
+
+          if (runningList.isEmpty && history.isEmpty) {
             return const EmptyState(
               icon: Icons.rocket_launch_outlined,
-              title: 'No running deployments',
+              title: 'No deployments yet',
               message:
-                  'Deployments you trigger appear here while they run. Pull to '
-                  'refresh, or open an app to see its full history.',
+                  'Deploy an app and it will show here — live while running, '
+                  'then in the history below.',
             );
           }
+
           return RefreshIndicator(
-            onRefresh: () async => ref.invalidate(runningDeploymentsProvider),
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: list.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 8),
-              itemBuilder: (_, i) {
-                final d = list[i];
-                return Card(
-                  child: ListTile(
-                    leading: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        color: d.statusColor,
-                      ),
-                    ),
-                    title: Text(d.applicationName),
-                    subtitle: Text(
-                      [
-                        d.statusLabel,
-                        if (d.shortCommit.isNotEmpty) d.shortCommit,
-                        if (d.serverName.isNotEmpty) d.serverName,
-                      ].join(' · '),
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            DeploymentDetailScreen(uuid: d.deploymentUuid),
-                      ),
-                    ),
+            onRefresh: () async {
+              ref.invalidate(runningDeploymentsProvider);
+              ref.invalidate(recentDeploymentsProvider);
+              await ref.read(recentDeploymentsProvider.future);
+            },
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              children: [
+                if (runningList.isNotEmpty) ...[
+                  const _SectionLabel('Running'),
+                  const SizedBox(height: 8),
+                  ...runningList.map(
+                    (d) => _DeploymentTile(deployment: d, running: true),
                   ),
-                );
-              },
+                  const SizedBox(height: 16),
+                ],
+                if (history.isNotEmpty) ...[
+                  const _SectionLabel('Recent'),
+                  const SizedBox(height: 8),
+                  ...history.map((d) => _DeploymentTile(deployment: d)),
+                ],
+              ],
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.label);
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Text(
+      label.toUpperCase(),
+      style: theme.textTheme.labelSmall?.copyWith(
+        color: theme.colorScheme.primary,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.8,
+      ),
+    );
+  }
+}
+
+class _DeploymentTile extends StatelessWidget {
+  const _DeploymentTile({required this.deployment, this.running = false});
+
+  final Deployment deployment;
+  final bool running;
+
+  @override
+  Widget build(BuildContext context) {
+    final d = deployment;
+    final when = d.updatedAt ?? d.createdAt;
+    final subtitle = [
+      d.statusLabel,
+      if (d.shortCommit.isNotEmpty) d.shortCommit,
+      if (when != null) DateFormat.MMMd().add_jm().format(when.toLocal()),
+    ].join(' · ');
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Card(
+        child: ListTile(
+          leading: running
+              ? SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: d.statusColor,
+                  ),
+                )
+              : Icon(Icons.circle, size: 14, color: d.statusColor),
+          title: Text(d.applicationName),
+          subtitle: Text(
+            subtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => DeploymentDetailScreen(uuid: d.deploymentUuid),
+            ),
+          ),
+        ),
       ),
     );
   }

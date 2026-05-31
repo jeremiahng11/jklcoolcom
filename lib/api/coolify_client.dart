@@ -406,13 +406,21 @@ class CoolifyClient {
     String appUuid, {
     int skip = 0,
     int take = 20,
-  }) async => _list(
-    await _send(
+  }) async {
+    final data = await _send(
       'GET',
       '/deployments/applications/$appUuid',
       query: {'skip': skip, 'take': take},
-    ),
-  ).map(Deployment.fromJson).toList();
+    );
+    // This endpoint wraps the list as {count, deployments: [...]}.
+    final list = data is Map && data['deployments'] is List
+        ? (data['deployments'] as List)
+        : (data is List ? data : const []);
+    return list
+        .whereType<Map<String, dynamic>>()
+        .map(Deployment.fromJson)
+        .toList();
+  }
 
   /// Triggers a deploy by resource uuid (or tag). Returns the deployment uuids.
   Future<List<String>> deploy({

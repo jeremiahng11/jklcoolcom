@@ -1,3 +1,4 @@
+import 'package:coolifycompanion/models/deployment.dart';
 import 'package:coolifycompanion/models/instance.dart';
 import 'package:coolifycompanion/models/status.dart';
 import 'package:coolifycompanion/widgets/status_badge.dart';
@@ -88,6 +89,33 @@ void main() {
       ),
     );
     expect(find.text('Healthy'), findsOneWidget);
+  });
+
+  group('Deployment', () {
+    test('decodes JSON-array logs into readable lines, skipping hidden', () {
+      final d = Deployment.fromJson({
+        'deployment_uuid': 'abc',
+        'status': 'finished',
+        'logs':
+            '[{"output":"Building…","hidden":false},'
+            '{"output":"secret","hidden":true},'
+            '{"output":"Done"}]',
+      });
+      expect(d.logsText, 'Building…\nDone');
+      expect(d.status, DeployState.finished);
+    });
+
+    test('falls back to raw text for non-JSON logs', () {
+      final d = Deployment.fromJson({'uuid': 'x', 'logs': 'plain text'});
+      expect(d.logsText, 'plain text');
+    });
+
+    test('copyWith overrides the application name', () {
+      final d = Deployment.fromJson({'uuid': 'x'}).copyWith(
+        applicationName: 'my-app',
+      );
+      expect(d.applicationName, 'my-app');
+    });
   });
 
   test('CoolifyInstance JSON round-trips', () {

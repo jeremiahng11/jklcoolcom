@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
@@ -40,6 +42,42 @@ class Deployment {
 
   bool get isRunning =>
       status == DeployState.queued || status == DeployState.inProgress;
+
+  Deployment copyWith({String? applicationName}) => Deployment(
+    deploymentUuid: deploymentUuid,
+    applicationName: applicationName ?? this.applicationName,
+    status: status,
+    commit: commit,
+    commitMessage: commitMessage,
+    isWebhook: isWebhook,
+    isApi: isApi,
+    forceRebuild: forceRebuild,
+    serverName: serverName,
+    logs: logs,
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+  );
+
+  /// Coolify stores deployment logs as a JSON array of
+  /// `{output, type, timestamp, hidden, ...}` entries. Decode it into readable
+  /// lines, falling back to the raw string when it isn't JSON.
+  String get logsText {
+    final raw = logs.trim();
+    if (raw.isEmpty) return '';
+    if (!raw.startsWith('[')) return raw;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is List) {
+        return decoded
+            .whereType<Map>()
+            .where((e) => e['hidden'] != true)
+            .map((e) => asStringOr(e['output']))
+            .where((s) => s.isNotEmpty)
+            .join('\n');
+      }
+    } catch (_) {}
+    return raw;
+  }
 
   factory Deployment.fromJson(Map<String, dynamic> json) {
     return Deployment(
