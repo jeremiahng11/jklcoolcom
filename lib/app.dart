@@ -6,6 +6,7 @@ import 'providers/instances_provider.dart';
 import 'providers/theme_provider.dart';
 import 'theme/app_theme.dart';
 import 'widgets/lock_gate.dart';
+import 'widgets/splash_gate.dart';
 
 class CoolifyCompanionApp extends ConsumerWidget {
   const CoolifyCompanionApp({super.key});
@@ -25,7 +26,8 @@ class CoolifyCompanionApp extends ConsumerWidget {
       darkTheme: AppTheme.dark(accent),
       themeMode: themeMode,
       routerConfig: router,
-      builder: (context, child) => LockGate(child: child ?? const SizedBox()),
+      builder: (context, child) =>
+          SplashGate(child: LockGate(child: child ?? const SizedBox())),
     );
   }
 }

@@ -62,6 +62,10 @@ dev_dependencies:
   # Generates launcher icons for Android & iOS from assets/icon/icon.png.
   flutter_launcher_icons: ^0.14.4
 
+  # Generates the native launch screen (violet, bolt) so there's no white
+  # flash before the in-app animated splash.
+  flutter_native_splash: ^2.4.4
+
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
@@ -110,6 +114,17 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# Native launch screen. Run: dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#6D28D4"
+  image: assets/icon/icon_foreground.png
+  android_12:
+    color: "#6D28D4"
+    image: assets/icon/icon_foreground.png
+  android: true
+  ios: true
+  web: false
 
 # Launcher icon generation. Run: dart run flutter_launcher_icons
 flutter_launcher_icons:
