@@ -116,7 +116,9 @@ class Deployment {
     return Deployment(
       deploymentUuid: asStringOr(json['deployment_uuid'] ?? json['uuid']),
       applicationName: asStringOr(json['application_name'], 'Application'),
-      appUuid: asStringOr(json['application_uuid']),
+      appUuid: asStringOr(
+        json['application_uuid'] ?? asMap(json['application'])['uuid'],
+      ),
       status: _state(asStringOr(json['status'])),
       commit: asStringOr(json['commit']),
       commitMessage: asStringOr(json['commit_message']),

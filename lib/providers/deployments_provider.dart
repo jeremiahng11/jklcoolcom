@@ -50,25 +50,12 @@ final recentDeploymentsProvider = FutureProvider<List<Deployment>>((ref) async {
   return all.take(40).toList();
 });
 
-/// Deployment history for a single application.
+/// Deployment history for a single application. Injects the app uuid so the
+/// detail screen can fetch logs / offer redeploy.
 final appDeploymentHistoryProvider =
     FutureProvider.family<List<Deployment>, String>((ref, appUuid) async {
       final client = ref.watch(coolifyClientProvider);
       if (client == null) return const [];
-      return client.appDeploymentHistory(appUuid, take: 30);
+      final history = await client.appDeploymentHistory(appUuid, take: 30);
+      return history.map((d) => d.copyWith(appUuid: appUuid)).toList();
     });
-
-/// A single deployment (with logs), polled while it is still running.
-final deploymentProvider = StreamProvider.family<Deployment, String>((
-  ref,
-  uuid,
-) async* {
-  final client = ref.watch(coolifyClientProvider);
-  if (client == null) return;
-  while (true) {
-    final d = await client.deployment(uuid);
-    yield d;
-    if (!d.isRunning) break;
-    await Future<void>.delayed(const Duration(seconds: 3));
-  }
-});

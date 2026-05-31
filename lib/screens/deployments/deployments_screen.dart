@@ -326,7 +326,7 @@ class _DeploymentTile extends ConsumerWidget {
   void _openLogs(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => DeploymentDetailScreen(uuid: deployment.deploymentUuid),
+        builder: (_) => DeploymentDetailScreen(deployment: deployment),
       ),
     );
   }

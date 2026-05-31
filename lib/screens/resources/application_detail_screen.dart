@@ -277,8 +277,7 @@ class _Deployments extends ConsumerWidget {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) =>
-                          DeploymentDetailScreen(uuid: d.deploymentUuid),
+                      builder: (_) => DeploymentDetailScreen(deployment: d),
                     ),
                   ),
                 ),

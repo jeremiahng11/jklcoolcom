@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -6,59 +8,130 @@ import '../../models/deployment.dart';
 import '../../providers/deployments_provider.dart';
 import '../../providers/instances_provider.dart';
 import '../../widgets/action_runner.dart';
-import '../../widgets/async_value_view.dart';
 import '../../widgets/log_console.dart';
 
-/// Shows a single deployment with its (live-polled) logs and metadata.
-class DeploymentDetailScreen extends ConsumerWidget {
-  const DeploymentDetailScreen({super.key, required this.uuid});
+/// Shows a single deployment with its logs and metadata.
+///
+/// Important: `GET /deployments/{uuid}` does NOT return logs, but the history
+/// endpoint (`/deployments/applications/{uuid}`) does. So we render the logs
+/// from the [deployment] we were handed (which came from the history list) and,
+/// while it is still running, poll the history endpoint for live updates.
+class DeploymentDetailScreen extends ConsumerStatefulWidget {
+  const DeploymentDetailScreen({super.key, required this.deployment});
 
-  final String uuid;
+  final Deployment deployment;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final deployment = ref.watch(deploymentProvider(uuid));
+  ConsumerState<DeploymentDetailScreen> createState() =>
+      _DeploymentDetailScreenState();
+}
+
+class _DeploymentDetailScreenState
+    extends ConsumerState<DeploymentDetailScreen> {
+  late Deployment _d = widget.deployment;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _init();
+  }
+
+  Future<void> _init() async {
+    // Resolve the owning app uuid if we weren't given it (needed to fetch logs).
+    if (_d.appUuid.isEmpty) {
+      final client = ref.read(coolifyClientProvider);
+      if (client != null) {
+        try {
+          final full = await client.deployment(_d.deploymentUuid);
+          if (full.appUuid.isNotEmpty) {
+            _d = _d.copyWith(appUuid: full.appUuid);
+          }
+        } catch (_) {}
+      }
+    }
+    // Fetch logs once if we don't have them yet, then poll while running.
+    if (_d.logsText.isEmpty) await _refresh();
+    if (_d.isRunning) {
+      _timer = Timer.periodic(const Duration(seconds: 3), (_) => _refresh());
+    }
+  }
+
+  Future<void> _refresh() async {
+    final client = ref.read(coolifyClientProvider);
+    if (client == null || _d.appUuid.isEmpty) return;
+    try {
+      final history = await client.appDeploymentHistory(_d.appUuid, take: 20);
+      Deployment? match;
+      for (final h in history) {
+        if (h.deploymentUuid == _d.deploymentUuid) {
+          match = h;
+          break;
+        }
+      }
+      if (match != null && mounted) {
+        setState(() => _d = match!.copyWith(appUuid: _d.appUuid));
+        if (!match.isRunning) _timer?.cancel();
+      }
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Deployment'),
         actions: [
-          if (deployment.value?.isRunning ?? false)
+          IconButton(
+            tooltip: 'Refresh',
+            onPressed: _refresh,
+            icon: const Icon(Icons.refresh),
+          ),
+          if (_d.isRunning)
             TextButton.icon(
-              onPressed: () async {
-                final client = ref.read(coolifyClientProvider);
-                if (client == null) return;
-                final ok = await confirmAction(
-                  context,
-                  title: 'Cancel deployment',
-                  message: 'Stop this running deployment?',
-                  confirmLabel: 'Cancel deployment',
-                  destructive: true,
-                );
-                if (ok && context.mounted) {
-                  await runAction(
-                    context,
-                    action: () => client.cancelDeployment(uuid),
-                    success: 'Deployment cancelled',
-                  );
-                }
-              },
+              onPressed: _cancel,
               icon: const Icon(Icons.cancel_outlined),
               label: const Text('Cancel'),
             ),
         ],
       ),
-      body: AsyncValueView<Deployment>(
-        value: deployment,
-        onRetry: () => ref.invalidate(deploymentProvider(uuid)),
-        data: (d) => Column(
-          children: [
-            _Meta(deployment: d),
-            const Divider(height: 1),
-            Expanded(child: LogConsole(text: d.logsText)),
-          ],
-        ),
+      body: Column(
+        children: [
+          _Meta(deployment: _d),
+          const Divider(height: 1),
+          Expanded(child: LogConsole(text: _d.logsText)),
+        ],
       ),
     );
+  }
+
+  Future<void> _cancel() async {
+    final client = ref.read(coolifyClientProvider);
+    if (client == null) return;
+    final ok = await confirmAction(
+      context,
+      title: 'Cancel deployment',
+      message: 'Stop this running deployment?',
+      confirmLabel: 'Cancel deployment',
+      destructive: true,
+    );
+    if (!ok || !mounted) return;
+    final done = await runAction(
+      context,
+      action: () => client.cancelDeployment(_d.deploymentUuid),
+      success: 'Deployment cancelled',
+    );
+    if (done) {
+      ref.invalidate(runningDeploymentsProvider);
+      ref.invalidate(recentDeploymentsProvider);
+      await _refresh();
+    }
   }
 }
 
@@ -115,7 +188,8 @@ class _Meta extends StatelessWidget {
                 ),
                 if (d.shortCommit.isNotEmpty)
                   Text(
-                    '${d.shortCommit} · ${d.serverName}',
+                    '${d.shortCommit}'
+                    '${d.serverName.isNotEmpty ? ' · ${d.serverName}' : ''}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 if (d.finishedAt != null)
