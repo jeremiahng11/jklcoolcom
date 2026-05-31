@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/application.dart';
@@ -263,9 +264,13 @@ class _Deployments extends ConsumerWidget {
                   title: Text(d.statusLabel),
                   subtitle: Text(
                     [
+                      if (d.durationLabel.isNotEmpty) 'took ${d.durationLabel}',
+                      if (d.finishedAt != null)
+                        DateFormat.MMMd().add_jm().format(
+                          d.finishedAt!.toLocal(),
+                        ),
                       if (d.shortCommit.isNotEmpty) d.shortCommit,
                       if (d.commitMessage.isNotEmpty) d.commitMessage,
-                      if (d.isWebhook) 'webhook' else if (d.isApi) 'api',
                     ].join(' · '),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,

@@ -27,8 +27,11 @@ final recentDeploymentsProvider = FutureProvider<List<Deployment>>((ref) async {
     apps.map((a) async {
       try {
         final history = await client.appDeploymentHistory(a.uuid, take: 5);
-        // History items carry no app name — inject a friendly one.
-        return history.map((d) => d.copyWith(applicationName: a.name)).toList();
+        // History items carry no app name/uuid — inject them so the UI can
+        // label and redeploy.
+        return history
+            .map((d) => d.copyWith(applicationName: a.name, appUuid: a.uuid))
+            .toList();
       } catch (_) {
         return const <Deployment>[];
       }

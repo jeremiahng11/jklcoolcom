@@ -11,6 +11,7 @@ class Deployment {
   const Deployment({
     required this.deploymentUuid,
     required this.applicationName,
+    required this.appUuid,
     required this.status,
     required this.commit,
     required this.commitMessage,
@@ -25,6 +26,10 @@ class Deployment {
 
   final String deploymentUuid;
   final String applicationName;
+
+  /// The owning application's uuid. Not present on the API payload — injected
+  /// by the aggregate provider so the UI can offer "Redeploy".
+  final String appUuid;
   final DeployState status;
   final String commit;
   final String commitMessage;
@@ -70,9 +75,10 @@ class Deployment {
     return '${d.inSeconds}s';
   }
 
-  Deployment copyWith({String? applicationName}) => Deployment(
+  Deployment copyWith({String? applicationName, String? appUuid}) => Deployment(
     deploymentUuid: deploymentUuid,
     applicationName: applicationName ?? this.applicationName,
+    appUuid: appUuid ?? this.appUuid,
     status: status,
     commit: commit,
     commitMessage: commitMessage,
@@ -110,6 +116,7 @@ class Deployment {
     return Deployment(
       deploymentUuid: asStringOr(json['deployment_uuid'] ?? json['uuid']),
       applicationName: asStringOr(json['application_name'], 'Application'),
+      appUuid: asStringOr(json['application_uuid']),
       status: _state(asStringOr(json['status'])),
       commit: asStringOr(json['commit']),
       commitMessage: asStringOr(json['commit_message']),
