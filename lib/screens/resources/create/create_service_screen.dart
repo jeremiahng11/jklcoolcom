@@ -114,10 +114,13 @@ class _CreateServiceScreenState extends ConsumerState<CreateServiceScreen> {
             onChanged: (v) => setState(() => _instantDeploy = v),
           ),
           const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: _create,
-            icon: const Icon(Icons.add),
-            label: const Text('Create service'),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _create,
+              icon: const Icon(Icons.add),
+              label: const Text('Create service'),
+            ),
           ),
         ],
       ),

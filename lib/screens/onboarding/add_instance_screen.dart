@@ -243,22 +243,28 @@ class _AddInstanceScreenState extends ConsumerState<AddInstanceScreen> {
               ),
             ),
           const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: _testing ? null : _test,
-            icon: _testing
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.wifi_tethering),
-            label: Text(_testing ? 'Testing…' : 'Test connection'),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _testing ? null : _test,
+              icon: _testing
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.wifi_tethering),
+              label: Text(_testing ? 'Testing…' : 'Test connection'),
+            ),
           ),
           const SizedBox(height: 12),
-          FilledButton.icon(
-            onPressed: _save,
-            icon: const Icon(Icons.save_outlined),
-            label: Text(_editing != null ? 'Save changes' : 'Add account'),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _save,
+              icon: const Icon(Icons.save_outlined),
+              label: Text(_editing != null ? 'Save changes' : 'Add account'),
+            ),
           ),
         ],
       ),

@@ -183,24 +183,25 @@ class _AppActions extends ConsumerWidget {
       }
     }
 
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        FilledButton.icon(
+    return ResourceActionBar(
+      actions: [
+        ResourceAction(
+          icon: Icons.rocket_launch,
+          label: 'Deploy',
+          primary: true,
           onPressed: () =>
               run(() => client.deploy(uuid: app.uuid), 'Deployment triggered'),
-          icon: const Icon(Icons.rocket_launch, size: 18),
-          label: const Text('Deploy'),
         ),
-        OutlinedButton.icon(
+        ResourceAction(
+          icon: Icons.restart_alt,
+          label: 'Restart',
           onPressed: () =>
               run(() => client.restartApplication(app.uuid), 'Restarting'),
-          icon: const Icon(Icons.restart_alt, size: 18),
-          label: const Text('Restart'),
         ),
         if (app.status.isRunning)
-          OutlinedButton.icon(
+          ResourceAction(
+            icon: Icons.stop,
+            label: 'Stop',
             onPressed: () async {
               final ok = await confirmAction(
                 context,
@@ -212,23 +213,21 @@ class _AppActions extends ConsumerWidget {
                 run(() => client.stopApplication(app.uuid), 'Stopping');
               }
             },
-            icon: const Icon(Icons.stop, size: 18),
-            label: const Text('Stop'),
           )
         else
-          OutlinedButton.icon(
+          ResourceAction(
+            icon: Icons.play_arrow,
+            label: 'Start',
             onPressed: () =>
                 run(() => client.startApplication(app.uuid), 'Starting'),
-            icon: const Icon(Icons.play_arrow, size: 18),
-            label: const Text('Start'),
           ),
-        OutlinedButton.icon(
+        ResourceAction(
+          icon: Icons.build,
+          label: 'Rebuild',
           onPressed: () => run(
             () => client.deploy(uuid: app.uuid, force: true),
             'Forced rebuild triggered',
           ),
-          icon: const Icon(Icons.build, size: 18),
-          label: const Text('Rebuild'),
         ),
       ],
     );

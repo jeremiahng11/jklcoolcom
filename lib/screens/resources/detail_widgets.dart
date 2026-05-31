@@ -1,6 +1,82 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// A single action shown in a [ResourceActionBar].
+class ResourceAction {
+  const ResourceAction({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    this.primary = false,
+    this.destructive = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+  final bool primary;
+  final bool destructive;
+}
+
+/// A row of equal-width, vertically-stacked (icon over label) action buttons.
+/// Gives detail headers a tidy, aligned action bar regardless of label length.
+class ResourceActionBar extends StatelessWidget {
+  const ResourceActionBar({super.key, required this.actions});
+
+  final List<ResourceAction> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        for (var i = 0; i < actions.length; i++) ...[
+          if (i > 0) const SizedBox(width: 8),
+          Expanded(child: _button(context, actions[i], scheme)),
+        ],
+      ],
+    );
+  }
+
+  Widget _button(BuildContext context, ResourceAction a, ColorScheme scheme) {
+    final child = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(a.icon, size: 20),
+        const SizedBox(height: 4),
+        Text(
+          a.label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        ),
+      ],
+    );
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    );
+    const padding = EdgeInsets.symmetric(vertical: 12, horizontal: 4);
+
+    if (a.primary) {
+      return FilledButton(
+        onPressed: a.onPressed,
+        style: FilledButton.styleFrom(shape: shape, padding: padding),
+        child: child,
+      );
+    }
+    return OutlinedButton(
+      onPressed: a.onPressed,
+      style: OutlinedButton.styleFrom(
+        shape: shape,
+        padding: padding,
+        foregroundColor: a.destructive ? scheme.error : null,
+        side: a.destructive ? BorderSide(color: scheme.error) : null,
+      ),
+      child: child,
+    );
+  }
+}
+
 /// Header block at the top of a resource detail screen: title, status badge,
 /// and a row of action buttons.
 class DetailHeader extends StatelessWidget {

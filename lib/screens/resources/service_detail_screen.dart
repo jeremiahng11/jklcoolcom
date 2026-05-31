@@ -89,19 +89,20 @@ class _Overview extends ConsumerWidget {
             statusBadge: StatusBadge(svc.status),
             actions: client == null
                 ? const SizedBox.shrink()
-                : Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      FilledButton.icon(
+                : ResourceActionBar(
+                    actions: [
+                      ResourceAction(
+                        icon: Icons.play_arrow,
+                        label: 'Start',
+                        primary: true,
                         onPressed: () => run(
                           () => client.startService(svc.uuid),
                           'Starting',
                         ),
-                        icon: const Icon(Icons.play_arrow, size: 18),
-                        label: const Text('Start'),
                       ),
-                      OutlinedButton.icon(
+                      ResourceAction(
+                        icon: Icons.stop,
+                        label: 'Stop',
                         onPressed: () async {
                           final ok = await confirmAction(
                             context,
@@ -113,16 +114,14 @@ class _Overview extends ConsumerWidget {
                             run(() => client.stopService(svc.uuid), 'Stopping');
                           }
                         },
-                        icon: const Icon(Icons.stop, size: 18),
-                        label: const Text('Stop'),
                       ),
-                      OutlinedButton.icon(
+                      ResourceAction(
+                        icon: Icons.restart_alt,
+                        label: 'Restart',
                         onPressed: () => run(
                           () => client.restartService(svc.uuid),
                           'Restarting',
                         ),
-                        icon: const Icon(Icons.restart_alt, size: 18),
-                        label: const Text('Restart'),
                       ),
                     ],
                   ),

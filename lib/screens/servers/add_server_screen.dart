@@ -125,10 +125,13 @@ class _AddServerScreenState extends ConsumerState<AddServerScreen> {
             onChanged: (v) => setState(() => _instantValidate = v),
           ),
           const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: _create,
-            icon: const Icon(Icons.add),
-            label: const Text('Add server'),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _create,
+              icon: const Icon(Icons.add),
+              label: const Text('Add server'),
+            ),
           ),
         ],
       ),

@@ -198,10 +198,13 @@ class _CreateApplicationScreenState
             onChanged: (v) => setState(() => _instantDeploy = v),
           ),
           const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: _create,
-            icon: const Icon(Icons.add),
-            label: const Text('Create application'),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _create,
+              icon: const Icon(Icons.add),
+              label: const Text('Create application'),
+            ),
           ),
         ],
       ),
