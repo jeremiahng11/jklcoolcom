@@ -43,6 +43,33 @@ class Deployment {
   bool get isRunning =>
       status == DeployState.queued || status == DeployState.inProgress;
 
+  bool get isTerminal =>
+      status == DeployState.finished ||
+      status == DeployState.failed ||
+      status == DeployState.cancelled;
+
+  /// When the deployment ended (for terminal states), else null.
+  DateTime? get finishedAt => isTerminal ? updatedAt : null;
+
+  /// How long the deployment took (created → finished). Null while running or
+  /// when timestamps are missing.
+  Duration? get duration {
+    final start = createdAt;
+    final end = finishedAt;
+    if (start == null || end == null) return null;
+    final d = end.difference(start);
+    return d.isNegative ? null : d;
+  }
+
+  /// Human duration, e.g. "23s", "1m 5s", "1h 2m". Empty when unavailable.
+  String get durationLabel {
+    final d = duration;
+    if (d == null) return '';
+    if (d.inHours > 0) return '${d.inHours}h ${d.inMinutes % 60}m';
+    if (d.inMinutes > 0) return '${d.inMinutes}m ${d.inSeconds % 60}s';
+    return '${d.inSeconds}s';
+  }
+
   Deployment copyWith({String? applicationName}) => Deployment(
     deploymentUuid: deploymentUuid,
     applicationName: applicationName ?? this.applicationName,

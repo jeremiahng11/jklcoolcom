@@ -47,6 +47,14 @@ final serversProvider = FutureProvider<List<Server>>((ref) async {
   return client.servers();
 });
 
+/// Resources (apps/dbs/services) running on a given server.
+final serverResourcesProvider =
+    FutureProvider.family<List<ResourceSummary>, String>((ref, uuid) async {
+      final client = ref.watch(coolifyClientProvider);
+      if (client == null) return const [];
+      return client.serverResources(uuid);
+    });
+
 final projectsProvider = FutureProvider<List<Project>>((ref) async {
   final client = ref.watch(coolifyClientProvider);
   if (client == null) return const [];

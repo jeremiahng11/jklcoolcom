@@ -42,6 +42,7 @@ class _CreateApplicationScreenState
   bool _instantDeploy = true;
   String? _privateKeyUuid;
   String? _githubAppUuid;
+  String _buildPack = 'nixpacks';
 
   @override
   void dispose() {
@@ -121,6 +122,28 @@ class _CreateApplicationScreenState
                 labelText: 'Exposed port',
                 prefixIcon: Icon(Icons.lan_outlined),
               ),
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<String>(
+              initialValue: _buildPack,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Build pack',
+                prefixIcon: Icon(Icons.construction_outlined),
+              ),
+              items: const [
+                DropdownMenuItem(value: 'nixpacks', child: Text('Nixpacks')),
+                DropdownMenuItem(value: 'static', child: Text('Static site')),
+                DropdownMenuItem(
+                  value: 'dockerfile',
+                  child: Text('Dockerfile (in repo)'),
+                ),
+                DropdownMenuItem(
+                  value: 'dockercompose',
+                  child: Text('Docker Compose (in repo)'),
+                ),
+              ],
+              onChanged: (v) => setState(() => _buildPack = v ?? 'nixpacks'),
             ),
             if (_source == AppSource.privateDeployKey) ...[
               const SizedBox(height: 12),
@@ -205,7 +228,7 @@ class _CreateApplicationScreenState
         body.addAll({
           'git_repository': _repo.text.trim(),
           'git_branch': _branch.text.trim(),
-          'build_pack': 'nixpacks',
+          'build_pack': _buildPack,
           'ports_exposes': _ports.text.trim(),
         });
         call = () => client.createPublicApp(body);
@@ -218,7 +241,7 @@ class _CreateApplicationScreenState
         body.addAll({
           'git_repository': _repo.text.trim(),
           'git_branch': _branch.text.trim(),
-          'build_pack': 'nixpacks',
+          'build_pack': _buildPack,
           'ports_exposes': _ports.text.trim(),
           'private_key_uuid': _privateKeyUuid,
         });
@@ -232,7 +255,7 @@ class _CreateApplicationScreenState
         body.addAll({
           'git_repository': _repo.text.trim(),
           'git_branch': _branch.text.trim(),
-          'build_pack': 'nixpacks',
+          'build_pack': _buildPack,
           'ports_exposes': _ports.text.trim(),
           'github_app_uuid': _githubAppUuid,
         });

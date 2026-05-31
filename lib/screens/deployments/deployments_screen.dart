@@ -125,9 +125,10 @@ class _DeploymentTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final d = deployment;
-    final when = d.updatedAt ?? d.createdAt;
+    final when = d.finishedAt ?? d.updatedAt ?? d.createdAt;
     final subtitle = [
       d.statusLabel,
+      if (d.durationLabel.isNotEmpty) d.durationLabel,
       if (d.shortCommit.isNotEmpty) d.shortCommit,
       if (when != null) DateFormat.MMMd().add_jm().format(when.toLocal()),
     ].join(' · ');

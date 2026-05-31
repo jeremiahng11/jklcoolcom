@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../models/deployment.dart';
 import '../../providers/deployments_provider.dart';
@@ -115,6 +116,17 @@ class _Meta extends StatelessWidget {
                 if (d.shortCommit.isNotEmpty)
                   Text(
                     '${d.shortCommit} · ${d.serverName}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                if (d.finishedAt != null)
+                  Text(
+                    'Finished ${DateFormat.MMMd().add_jm().format(d.finishedAt!.toLocal())}'
+                    '${d.durationLabel.isNotEmpty ? ' · took ${d.durationLabel}' : ''}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  )
+                else if (d.durationLabel.isNotEmpty)
+                  Text(
+                    'Took ${d.durationLabel}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
               ],

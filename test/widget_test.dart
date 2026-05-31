@@ -111,10 +111,35 @@ void main() {
     });
 
     test('copyWith overrides the application name', () {
-      final d = Deployment.fromJson({'uuid': 'x'}).copyWith(
-        applicationName: 'my-app',
-      );
+      final d = Deployment.fromJson({
+        'uuid': 'x',
+      }).copyWith(applicationName: 'my-app');
       expect(d.applicationName, 'my-app');
+    });
+
+    test('computes finished time and duration for terminal states', () {
+      final d = Deployment.fromJson({
+        'uuid': 'x',
+        'status': 'finished',
+        'created_at': '2026-05-31T12:07:49.000000Z',
+        'updated_at': '2026-05-31T12:08:12.000000Z',
+      });
+      expect(d.isTerminal, isTrue);
+      expect(d.finishedAt, isNotNull);
+      expect(d.duration, const Duration(seconds: 23));
+      expect(d.durationLabel, '23s');
+    });
+
+    test('running deployment has no finished time or duration', () {
+      final d = Deployment.fromJson({
+        'uuid': 'x',
+        'status': 'in_progress',
+        'created_at': '2026-05-31T12:07:49.000000Z',
+        'updated_at': '2026-05-31T12:08:12.000000Z',
+      });
+      expect(d.isRunning, isTrue);
+      expect(d.finishedAt, isNull);
+      expect(d.durationLabel, '');
     });
   });
 

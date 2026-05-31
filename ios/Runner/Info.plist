@@ -15,10 +15,12 @@
 	</dict>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Coolify Companion connects to Coolify instances on your local network.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Coolify Companion uses Face ID to unlock the app and protect your saved API tokens.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Coolifycompanion</string>
+	<string>Coolify Companion</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

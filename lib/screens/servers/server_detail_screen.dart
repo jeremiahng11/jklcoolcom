@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../models/resource.dart';
 import '../../models/server.dart';
 import '../../models/status.dart';
 import '../../providers/instances_provider.dart';
 import '../../providers/resource_providers.dart';
 import '../../widgets/action_runner.dart';
 import '../../widgets/async_value_view.dart';
+import '../../widgets/resource_card.dart';
 import '../../widgets/status_badge.dart';
 import '../resources/detail_widgets.dart';
 
@@ -84,6 +86,7 @@ class ServerDetailScreen extends ConsumerWidget {
                 title: 'Description',
                 children: [Text(s.description)],
               ),
+            _ServerResources(uuid: uuid),
             const SizedBox(height: 8),
             DangerZone(
               label: 'Remove server',
@@ -122,6 +125,54 @@ class ServerDetailScreen extends ConsumerWidget {
     if (done && context.mounted) {
       ref.invalidate(serversProvider);
       context.pop();
+    }
+  }
+}
+
+class _ServerResources extends ConsumerWidget {
+  const _ServerResources({required this.uuid});
+  final String uuid;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final resources = ref.watch(serverResourcesProvider(uuid));
+    return resources.maybeWhen(
+      data: (list) {
+        if (list.isEmpty) return const SizedBox.shrink();
+        return DetailSection(
+          title: 'Resources on this server',
+          children: [
+            for (final r in list)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: ResourceCard(
+                  icon: iconForKind(r.kind),
+                  title: r.name,
+                  subtitle: r.typeLabel,
+                  status: r.status,
+                  onTap: () => _open(context, r),
+                ),
+              ),
+          ],
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
+    );
+  }
+
+  void _open(BuildContext context, ResourceSummary r) {
+    switch (r.kind) {
+      case ResourceKind.application:
+        context.push('/resources/app/${r.uuid}');
+        break;
+      case ResourceKind.database:
+        context.push('/resources/db/${r.uuid}');
+        break;
+      case ResourceKind.service:
+        context.push('/resources/service/${r.uuid}');
+        break;
+      case ResourceKind.unknown:
+        break;
     }
   }
 }

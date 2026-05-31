@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../providers/instances_provider.dart';
+import '../../providers/lock_provider.dart';
 import '../../providers/resource_providers.dart';
 import '../../providers/theme_provider.dart';
 import '../../widgets/account_action.dart';
@@ -95,6 +96,9 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => context.push('/cloud-tokens'),
           ),
           const Divider(),
+          _header(context, 'Security'),
+          _AppLockTile(),
+          const Divider(),
           _header(context, 'Appearance'),
           RadioGroup<ThemeMode>(
             groupValue: themeMode,
@@ -167,4 +171,38 @@ class SettingsScreen extends ConsumerWidget {
       ),
     ),
   );
+}
+
+class _AppLockTile extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lock = ref.watch(appLockProvider);
+    return SwitchListTile(
+      secondary: const Icon(Icons.fingerprint),
+      title: const Text('Require biometric unlock'),
+      subtitle: const Text(
+        'Protect saved API tokens with Face ID / fingerprint',
+      ),
+      value: lock.enabled,
+      onChanged: (v) async {
+        final notifier = ref.read(appLockProvider.notifier);
+        if (v) {
+          final supported = await notifier.isSupported();
+          if (!supported) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'No biometrics or device passcode set up on this device.',
+                  ),
+                ),
+              );
+            }
+            return;
+          }
+        }
+        await notifier.setEnabled(v);
+      },
+    );
+  }
 }
