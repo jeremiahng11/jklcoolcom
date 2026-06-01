@@ -23,6 +23,8 @@ class _AddInstanceScreenState extends ConsumerState<AddInstanceScreen> {
   final _label = TextEditingController();
   final _url = TextEditingController();
   final _token = TextEditingController();
+  final _metricsUrl = TextEditingController();
+  final _metricsToken = TextEditingController();
   int _accent = AppTheme.accentColors.first.toARGB32();
   bool _obscure = true;
   bool _testing = false;
@@ -46,6 +48,11 @@ class _AddInstanceScreenState extends ConsumerState<AddInstanceScreen> {
         _url.text = _editing!.baseUrl;
         _accent = _editing!.accentColor;
         _token.text = state?.tokens[id] ?? '';
+        _metricsUrl.text = _editing!.metricsUrl;
+        // Load the (secret) metrics token from secure storage.
+        ref.read(instanceStoreProvider).metricsTokenFor(id).then((t) {
+          if (mounted && t != null) _metricsToken.text = t;
+        });
       }
     }
   }
@@ -55,6 +62,8 @@ class _AddInstanceScreenState extends ConsumerState<AddInstanceScreen> {
     _label.dispose();
     _url.dispose();
     _token.dispose();
+    _metricsUrl.dispose();
+    _metricsToken.dispose();
     super.dispose();
   }
 
@@ -102,10 +111,15 @@ class _AddInstanceScreenState extends ConsumerState<AddInstanceScreen> {
       label: label,
       baseUrl: base,
       accentColor: _accent,
+      metricsUrl: CoolifyInstance.normaliseMetricsUrl(_metricsUrl.text),
     );
     await ref
         .read(instancesProvider.notifier)
-        .addOrUpdate(instance, token: token);
+        .addOrUpdate(
+          instance,
+          token: token,
+          metricsToken: _metricsToken.text.trim(),
+        );
     if (!mounted) return;
     if (context.canPop()) {
       context.pop();
@@ -188,6 +202,38 @@ class _AddInstanceScreenState extends ConsumerState<AddInstanceScreen> {
                   'Create one in Coolify → Keys & Tokens. Grant read, write & '
                   'deploy scopes for full control.',
               helperMaxLines: 3,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text('Live metrics (optional)', style: theme.textTheme.labelLarge),
+          const SizedBox(height: 4),
+          Text(
+            'Run the metrics agent on your server to see live CPU, memory, disk '
+            '& uptime on the dashboard. See agent/README.md.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _metricsUrl,
+            keyboardType: TextInputType.url,
+            autocorrect: false,
+            decoration: const InputDecoration(
+              labelText: 'Metrics agent URL',
+              hintText: 'http://192.168.0.147:8088',
+              prefixIcon: Icon(Icons.speed_outlined),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _metricsToken,
+            obscureText: _obscure,
+            autocorrect: false,
+            enableSuggestions: false,
+            decoration: const InputDecoration(
+              labelText: 'Agent token',
+              prefixIcon: Icon(Icons.vpn_key_outlined),
             ),
           ),
           const SizedBox(height: 18),

@@ -65,9 +65,10 @@ class InstancesNotifier extends AsyncNotifier<InstancesState> {
   Future<void> addOrUpdate(
     CoolifyInstance instance, {
     String? token,
+    String? metricsToken,
     bool makeActive = true,
   }) async {
-    await _store.save(instance, token: token);
+    await _store.save(instance, token: token, metricsToken: metricsToken);
     if (makeActive) await _store.setActiveInstanceId(instance.id);
 
     final current =

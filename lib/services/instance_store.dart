@@ -23,6 +23,7 @@ class InstanceStore {
   static const _instancesKey = 'instances';
   static const _activeKey = 'active_instance_id';
   static String _tokenKey(String id) => 'token_$id';
+  static String _metricsTokenKey(String id) => 'metrics_token_$id';
 
   Future<List<CoolifyInstance>> loadInstances() async {
     final prefs = await SharedPreferences.getInstance();
@@ -61,8 +62,13 @@ class InstanceStore {
     }
   }
 
-  /// Adds or updates an instance, storing the token securely if provided.
-  Future<void> save(CoolifyInstance instance, {String? token}) async {
+  /// Adds or updates an instance, storing secrets securely if provided.
+  /// [metricsToken] may be an empty string to clear it.
+  Future<void> save(
+    CoolifyInstance instance, {
+    String? token,
+    String? metricsToken,
+  }) async {
     final instances = await loadInstances();
     final idx = instances.indexWhere((i) => i.id == instance.id);
     if (idx >= 0) {
@@ -74,6 +80,16 @@ class InstanceStore {
     if (token != null && token.isNotEmpty) {
       await _secure.write(key: _tokenKey(instance.id), value: token);
     }
+    if (metricsToken != null) {
+      if (metricsToken.isEmpty) {
+        await _secure.delete(key: _metricsTokenKey(instance.id));
+      } else {
+        await _secure.write(
+          key: _metricsTokenKey(instance.id),
+          value: metricsToken,
+        );
+      }
+    }
   }
 
   Future<void> delete(String id) async {
@@ -81,6 +97,7 @@ class InstanceStore {
     instances.removeWhere((i) => i.id == id);
     await _persist(instances);
     await _secure.delete(key: _tokenKey(id));
+    await _secure.delete(key: _metricsTokenKey(id));
     final active = await activeInstanceId();
     if (active == id) {
       await setActiveInstanceId(
@@ -90,4 +107,7 @@ class InstanceStore {
   }
 
   Future<String?> tokenFor(String id) => _secure.read(key: _tokenKey(id));
+
+  Future<String?> metricsTokenFor(String id) =>
+      _secure.read(key: _metricsTokenKey(id));
 }

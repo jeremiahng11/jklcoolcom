@@ -11,6 +11,7 @@ import '../theme/app_theme.dart';
 import '../widgets/account_action.dart';
 import '../widgets/async_value_view.dart';
 import '../widgets/auto_refresh.dart';
+import '../widgets/live_metrics_card.dart';
 import '../widgets/resource_card.dart';
 import '../widgets/status_badge.dart';
 import 'resources/resources_screen.dart';
@@ -75,6 +76,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
               _HealthHeader(summary: s),
+              const SizedBox(height: 16),
+              const LiveMetricsCard(),
               const SizedBox(height: 16),
               _CountRow(summary: s),
               const SizedBox(height: 20),

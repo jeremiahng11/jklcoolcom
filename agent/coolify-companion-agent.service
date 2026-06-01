@@ -1,0 +1,16 @@
+[Unit]
+Description=Coolify Companion metrics agent
+After=network.target
+
+[Service]
+# Generate a secret once:  openssl rand -hex 24
+Environment=METRICS_TOKEN=CHANGE_ME
+Environment=METRICS_PORT=8088
+ExecStart=/usr/bin/python3 /opt/coolify-companion-agent/agent.py
+Restart=always
+RestartSec=3
+# Reading /proc, /proc/meminfo and statvfs('/') does not need root.
+DynamicUser=yes
+
+[Install]
+WantedBy=multi-user.target

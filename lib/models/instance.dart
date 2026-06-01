@@ -11,6 +11,7 @@ class CoolifyInstance {
     required this.label,
     required this.baseUrl,
     required this.accentColor,
+    this.metricsUrl = '',
   });
 
   /// Stable local identifier (also the secure-storage key for the token).
@@ -25,6 +26,13 @@ class CoolifyInstance {
   /// ARGB value of the per-instance accent colour.
   final int accentColor;
 
+  /// Optional base URL of the metrics agent on the host (e.g.
+  /// `http://192.168.0.147:8088`). Empty when not configured. The agent token
+  /// is a secret stored separately in secure storage.
+  final String metricsUrl;
+
+  bool get hasMetrics => metricsUrl.trim().isNotEmpty;
+
   /// The origin without the `/api/v1` suffix — useful for opening the
   /// dashboard in a browser.
   String get dashboardUrl {
@@ -35,12 +43,18 @@ class CoolifyInstance {
 
   String get host => Uri.tryParse(baseUrl)?.host ?? baseUrl;
 
-  CoolifyInstance copyWith({String? label, String? baseUrl, int? accentColor}) {
+  CoolifyInstance copyWith({
+    String? label,
+    String? baseUrl,
+    int? accentColor,
+    String? metricsUrl,
+  }) {
     return CoolifyInstance(
       id: id,
       label: label ?? this.label,
       baseUrl: baseUrl ?? this.baseUrl,
       accentColor: accentColor ?? this.accentColor,
+      metricsUrl: metricsUrl ?? this.metricsUrl,
     );
   }
 
@@ -49,6 +63,7 @@ class CoolifyInstance {
     'label': label,
     'baseUrl': baseUrl,
     'accentColor': accentColor,
+    'metricsUrl': metricsUrl,
   };
 
   factory CoolifyInstance.fromJson(Map<String, dynamic> json) {
@@ -57,7 +72,19 @@ class CoolifyInstance {
       label: asStringOr(json['label'], 'Coolify'),
       baseUrl: asStringOr(json['baseUrl']),
       accentColor: asIntOr(json['accentColor'], 0xFF8B5CF6),
+      metricsUrl: asStringOr(json['metricsUrl']),
     );
+  }
+
+  /// Normalises a metrics-agent URL: adds a scheme (http for LAN hosts) and
+  /// strips any trailing slash. Empty input stays empty.
+  static String normaliseMetricsUrl(String input) {
+    var raw = input.trim();
+    if (raw.isEmpty) return '';
+    if (!raw.startsWith('http://') && !raw.startsWith('https://')) {
+      raw = 'http://$raw';
+    }
+    return raw.replaceAll(RegExp(r'/+$'), '');
   }
 
   /// Normalises raw user input into a base URL ending in `/api/v1`.
