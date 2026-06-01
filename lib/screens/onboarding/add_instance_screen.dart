@@ -229,6 +229,15 @@ class _AddInstanceScreenState extends ConsumerState<AddInstanceScreen> {
             ),
             const SizedBox(height: 24),
           ],
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              onPressed: () => context.push('/connect-guide'),
+              icon: const Icon(Icons.help_outline, size: 18),
+              label: const Text('Where do I find my URL & token?'),
+            ),
+          ),
+          const SizedBox(height: 16),
           TextField(
             controller: _label,
             decoration: const InputDecoration(

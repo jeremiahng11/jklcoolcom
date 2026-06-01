@@ -7,6 +7,7 @@ import 'screens/deployments/deployments_screen.dart';
 import 'screens/home_shell.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/onboarding/add_instance_screen.dart';
+import 'screens/onboarding/connect_guide_screen.dart';
 import 'screens/projects/projects_screen.dart';
 import 'screens/resources/application_detail_screen.dart';
 import 'screens/resources/create/create_application_screen.dart';
@@ -67,6 +68,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/add-instance',
         builder: (_, _) => const AddInstanceScreen(),
+      ),
+      GoRoute(
+        path: '/connect-guide',
+        builder: (_, _) => const ConnectGuideScreen(),
       ),
       GoRoute(
         path: '/edit-instance/:id',
