@@ -82,9 +82,31 @@ class _LockGateState extends ConsumerState<LockGate>
   }
 }
 
-class _LockScreen extends StatelessWidget {
+class _LockScreen extends StatefulWidget {
   const _LockScreen({required this.onUnlock});
   final VoidCallback onUnlock;
+
+  @override
+  State<_LockScreen> createState() => _LockScreenState();
+}
+
+class _LockScreenState extends State<_LockScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2600),
+  )..repeat(reverse: true);
+
+  late final Animation<double> _t = CurvedAnimation(
+    parent: _pulse,
+    curve: Curves.easeInOut,
+  );
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,10 +117,25 @@ class _LockScreen extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Large faded lightning behind the lock.
-          Opacity(
-            opacity: 0.07,
-            child: BoltMark(size: boltSize, color: scheme.primary),
+          // Large faded lightning behind the lock — breathing glow + scale.
+          AnimatedBuilder(
+            animation: _t,
+            builder: (context, _) {
+              final v = _t.value; // 0..1
+              return Opacity(
+                opacity: 0.05 + 0.06 * v,
+                child: Transform.scale(
+                  scale: 0.92 + 0.16 * v,
+                  child: CustomPaint(
+                    size: Size.square(boltSize),
+                    painter: BoltPainter(
+                      color: scheme.primary,
+                      glow: 0.2 + 0.8 * v,
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
           Center(
             child: Column(
@@ -112,7 +149,7 @@ class _LockScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 FilledButton.icon(
-                  onPressed: onUnlock,
+                  onPressed: widget.onUnlock,
                   icon: const Icon(Icons.fingerprint),
                   label: const Text('Unlock'),
                 ),
