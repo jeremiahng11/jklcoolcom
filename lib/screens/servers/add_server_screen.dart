@@ -59,7 +59,15 @@ class _AddServerScreenState extends ConsumerState<AddServerScreen> {
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => context.push('/servers/connect-cloud'),
+              icon: const Icon(Icons.help_outline, size: 18),
+              label: const Text('Using another cloud? How to connect'),
+            ),
+          ),
+          const SizedBox(height: 8),
           TextField(
             controller: _name,
             decoration: const InputDecoration(

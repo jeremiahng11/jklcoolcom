@@ -17,6 +17,7 @@ import 'screens/resources/database_detail_screen.dart';
 import 'screens/resources/resources_screen.dart';
 import 'screens/resources/service_detail_screen.dart';
 import 'screens/servers/add_server_screen.dart';
+import 'screens/servers/connect_cloud_guide_screen.dart';
 import 'screens/servers/server_detail_screen.dart';
 import 'screens/servers/servers_screen.dart';
 import 'screens/settings/cloud_tokens_screen.dart';
@@ -112,6 +113,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/servers/hetzner',
         builder: (_, _) => const HetznerProvisionScreen(),
+      ),
+      GoRoute(
+        path: '/servers/connect-cloud',
+        builder: (_, _) => const ConnectCloudGuideScreen(),
       ),
       GoRoute(
         path: '/servers/:uuid',
