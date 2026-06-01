@@ -38,31 +38,50 @@ _prev_cpu = None
 _lock = threading.Lock()
 
 
-def _read_cpu():
+def _read_all_cpu():
+    """Read overall + per-core CPU times from /proc/stat.
+
+    Returns {"total": (idle, total), 0: (idle, total), 1: ...}.
+    """
+    res = {}
     with open(f"{PROC}/stat") as f:
-        parts = f.readline().split()[1:]
-    vals = [int(x) for x in parts]
-    idle = vals[3] + (vals[4] if len(vals) > 4 else 0)  # idle + iowait
-    return idle, sum(vals)
+        for line in f:
+            if not line.startswith("cpu"):
+                break
+            parts = line.split()
+            vals = [int(x) for x in parts[1:]]
+            idle = vals[3] + (vals[4] if len(vals) > 4 else 0)  # idle + iowait
+            key = "total" if parts[0] == "cpu" else int(parts[0][3:])
+            res[key] = (idle, sum(vals))
+    return res
 
 
-def cpu_percent():
+def cpu_stats():
+    """Return (overall_percent, [per_core_percent, ...])."""
     global _prev_cpu
     with _lock:
-        cur = _read_cpu()
+        cur = _read_all_cpu()
         if _prev_cpu is None:
             time.sleep(0.2)
             a = cur
-            b = _read_cpu()
+            b = _read_all_cpu()
         else:
             a = _prev_cpu
             b = cur
         _prev_cpu = b
-    idle_d = b[0] - a[0]
-    total_d = b[1] - a[1]
-    if total_d <= 0:
-        return 0.0
-    return max(0.0, min(100.0, 100.0 * (1 - idle_d / total_d)))
+
+    def pct(k):
+        if k not in a or k not in b:
+            return 0.0
+        idle_d = b[k][0] - a[k][0]
+        total_d = b[k][1] - a[k][1]
+        if total_d <= 0:
+            return 0.0
+        return round(max(0.0, min(100.0, 100.0 * (1 - idle_d / total_d))), 1)
+
+    overall = pct("total")
+    cores = [pct(i) for i in sorted(k for k in b if isinstance(k, int))]
+    return overall, cores
 
 
 def mem():
@@ -104,10 +123,12 @@ def loadavg():
 
 
 def collect():
+    overall, per_core = cpu_stats()
     return {
         "hostname": socket.gethostname(),
         "cores": os.cpu_count() or 0,
-        "cpu_percent": round(cpu_percent(), 1),
+        "cpu_percent": overall,
+        "cpu_per_core": per_core,
         "mem": mem(),
         "disk": disk(),
         "uptime_seconds": int(uptime()),

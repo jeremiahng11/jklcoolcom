@@ -14,11 +14,13 @@ class ServerMetrics {
     required this.diskPercent,
     required this.uptimeSeconds,
     required this.load,
+    required this.cpuPerCore,
   });
 
   final String hostname;
   final int cores;
   final double cpuPercent;
+  final List<double> cpuPerCore;
   final int memUsed;
   final int memTotal;
   final double memPercent;
@@ -54,6 +56,7 @@ class ServerMetrics {
     final mem = asMap(json['mem']);
     final disk = asMap(json['disk']);
     final loadRaw = json['load'];
+    final coresRaw = json['cpu_per_core'];
     return ServerMetrics(
       hostname: asStringOr(json['hostname']),
       cores: asIntOr(json['cores']),
@@ -67,6 +70,9 @@ class ServerMetrics {
       uptimeSeconds: asIntOr(json['uptime_seconds']),
       load: loadRaw is List
           ? loadRaw.map((e) => _d(e)).toList()
+          : const <double>[],
+      cpuPerCore: coresRaw is List
+          ? coresRaw.map((e) => _d(e).clamp(0, 100).toDouble()).toList()
           : const <double>[],
     );
   }

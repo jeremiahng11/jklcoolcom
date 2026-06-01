@@ -7,12 +7,27 @@ import '../providers/metrics_provider.dart';
 import '../theme/app_theme.dart';
 
 /// Dashboard card showing live CPU / memory / disk / uptime from the metrics
-/// agent. Shows a setup hint when no agent is configured for the active account.
-class LiveMetricsCard extends ConsumerWidget {
+/// agent, with per-core CPU bars and CPU/RAM sparklines (history kept while the
+/// dashboard is open). Shows a setup hint when no agent is configured.
+class LiveMetricsCard extends ConsumerStatefulWidget {
   const LiveMetricsCard({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LiveMetricsCard> createState() => _LiveMetricsCardState();
+}
+
+class _LiveMetricsCardState extends ConsumerState<LiveMetricsCard> {
+  static const _maxSamples = 40;
+  final List<double> _cpuHist = [];
+  final List<double> _memHist = [];
+
+  void _push(List<double> buf, double v) {
+    buf.add(v);
+    if (buf.length > _maxSamples) buf.removeAt(0);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final instance = ref.watch(activeInstanceProvider);
     if (instance == null) return const SizedBox.shrink();
 
@@ -30,9 +45,21 @@ class LiveMetricsCard extends ConsumerWidget {
       );
     }
 
+    // Accumulate history as new samples arrive.
+    ref.listen(liveMetricsProvider, (prev, next) {
+      final d = next.value?.data;
+      if (d != null) {
+        setState(() {
+          _push(_cpuHist, d.cpuPercent);
+          _push(_memHist, d.memPercent);
+        });
+      }
+    });
+
     final snap = ref.watch(liveMetricsProvider).value;
     final data = snap?.data;
     final error = snap?.error;
+    final theme = Theme.of(context);
 
     return Card(
       child: Padding(
@@ -54,8 +81,8 @@ class LiveMetricsCard extends ConsumerWidget {
                 if (data != null)
                   Text(
                     'up ${data.uptimeLabel}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
               ],
@@ -68,14 +95,32 @@ class LiveMetricsCard extends ConsumerWidget {
                 percent: data.cpuPercent,
                 detail: data.cores > 0 ? '${data.cores} cores' : '',
               ),
-              const SizedBox(height: 12),
+              if (_cpuHist.length > 1) ...[
+                const SizedBox(height: 6),
+                _Sparkline(
+                  values: _cpuHist,
+                  color: _levelColor(data.cpuPercent),
+                ),
+              ],
+              if (data.cpuPerCore.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _CoreBars(cores: data.cpuPerCore),
+              ],
+              const SizedBox(height: 14),
               _MetricBar(
                 icon: Icons.sd_card_outlined,
                 label: 'Memory',
                 percent: data.memPercent,
                 detail: data.memLabel,
               ),
-              const SizedBox(height: 12),
+              if (_memHist.length > 1) ...[
+                const SizedBox(height: 6),
+                _Sparkline(
+                  values: _memHist,
+                  color: _levelColor(data.memPercent),
+                ),
+              ],
+              const SizedBox(height: 14),
               _MetricBar(
                 icon: Icons.storage_rounded,
                 label: 'Disk',
@@ -86,8 +131,8 @@ class LiveMetricsCard extends ConsumerWidget {
                 const SizedBox(height: 12),
                 Text(
                   'Load avg  ${data.load.map((l) => l.toStringAsFixed(2)).join('  ')}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -97,7 +142,7 @@ class LiveMetricsCard extends ConsumerWidget {
                   Icon(
                     Icons.error_outline,
                     size: 18,
-                    color: Theme.of(context).colorScheme.error,
+                    color: theme.colorScheme.error,
                   ),
                   const SizedBox(width: 8),
                   Expanded(child: Text(error)),
@@ -122,6 +167,12 @@ class LiveMetricsCard extends ConsumerWidget {
   }
 }
 
+Color _levelColor(double percent) {
+  if (percent >= 90) return StatusColors.down;
+  if (percent >= 70) return StatusColors.warning;
+  return StatusColors.healthy;
+}
+
 class _MetricBar extends StatelessWidget {
   const _MetricBar({
     required this.icon,
@@ -135,16 +186,10 @@ class _MetricBar extends StatelessWidget {
   final double percent;
   final String detail;
 
-  Color _color() {
-    if (percent >= 90) return StatusColors.down;
-    if (percent >= 70) return StatusColors.warning;
-    return StatusColors.healthy;
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = _color();
+    final color = _levelColor(percent);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -181,4 +226,110 @@ class _MetricBar extends StatelessWidget {
       ],
     );
   }
+}
+
+/// A compact equalizer-style row of per-core CPU bars.
+class _CoreBars extends StatelessWidget {
+  const _CoreBars({required this.cores});
+  final List<double> cores;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        for (var i = 0; i < cores.length; i++) ...[
+          if (i > 0) const SizedBox(width: 6),
+          Expanded(
+            child: Tooltip(
+              message: 'Core $i: ${cores[i].toStringAsFixed(0)}%',
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: 26,
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: FractionallySizedBox(
+                        heightFactor: (cores[i] / 100).clamp(0.04, 1.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: _levelColor(cores[i]),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '$i',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Simple sparkline of values (each 0..100) over a fixed height.
+class _Sparkline extends StatelessWidget {
+  const _Sparkline({required this.values, required this.color});
+  final List<double> values;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 28,
+      width: double.infinity,
+      child: CustomPaint(painter: _SparkPainter(values, color)),
+    );
+  }
+}
+
+class _SparkPainter extends CustomPainter {
+  _SparkPainter(this.values, this.color);
+  final List<double> values;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.length < 2) return;
+    final n = values.length;
+    Offset pt(int i) {
+      final x = i / (n - 1) * size.width;
+      final y = size.height - (values[i].clamp(0, 100) / 100) * size.height;
+      return Offset(x, y);
+    }
+
+    final line = Path()..moveTo(pt(0).dx, pt(0).dy);
+    for (var i = 1; i < n; i++) {
+      line.lineTo(pt(i).dx, pt(i).dy);
+    }
+
+    // Soft fill under the line.
+    final fill = Path.from(line)
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    canvas.drawPath(fill, Paint()..color = color.withValues(alpha: 0.12));
+    canvas.drawPath(
+      line,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..strokeJoin = StrokeJoin.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_SparkPainter old) =>
+      old.values != values || old.color != color;
 }
