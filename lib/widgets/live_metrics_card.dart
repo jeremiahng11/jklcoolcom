@@ -148,6 +148,25 @@ class _LiveMetricsCardState extends ConsumerState<LiveMetricsCard> {
                   Expanded(child: Text(error)),
                 ],
               ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Wrap(
+                  spacing: 8,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () => ref.invalidate(liveMetricsProvider),
+                      icon: const Icon(Icons.refresh, size: 18),
+                      label: const Text('Retry'),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => context.push('/metrics-setup'),
+                      icon: const Icon(Icons.help_outline, size: 18),
+                      label: const Text('Setup help'),
+                    ),
+                  ],
+                ),
+              ),
             ] else
               const Row(
                 children: [

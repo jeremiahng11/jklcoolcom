@@ -1,9 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
 
 import '../../api/coolify_client.dart';
 import '../../models/instance.dart';
+import '../../models/server_metrics.dart';
 import '../../providers/instances_provider.dart';
 import '../../theme/app_theme.dart';
 
@@ -30,6 +34,9 @@ class _AddInstanceScreenState extends ConsumerState<AddInstanceScreen> {
   bool _testing = false;
   String? _testResult;
   bool _testOk = false;
+  bool _metricsTesting = false;
+  String? _metricsTestResult;
+  bool _metricsTestOk = false;
 
   CoolifyInstance? _editing;
 
@@ -92,6 +99,64 @@ class _AddInstanceScreenState extends ConsumerState<AddInstanceScreen> {
     } finally {
       client.dispose();
       if (mounted) setState(() => _testing = false);
+    }
+  }
+
+  Future<void> _testMetrics() async {
+    FocusScope.of(context).unfocus();
+    final url = CoolifyInstance.normaliseMetricsUrl(_metricsUrl.text);
+    if (url.isEmpty) {
+      setState(() {
+        _metricsTestOk = false;
+        _metricsTestResult = 'Enter the agent URL first.';
+      });
+      return;
+    }
+    setState(() {
+      _metricsTesting = true;
+      _metricsTestResult = null;
+      _metricsTestOk = false;
+    });
+    try {
+      final res = await http
+          .get(
+            Uri.parse('$url/metrics'),
+            headers: {
+              'Authorization': 'Bearer ${_metricsToken.text.trim()}',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 8));
+      if (res.statusCode == 200) {
+        final m = ServerMetrics.fromJson(
+          jsonDecode(res.body) as Map<String, dynamic>,
+        );
+        setState(() {
+          _metricsTestOk = true;
+          _metricsTestResult =
+              'Connected · ${m.hostname.isEmpty ? 'agent' : m.hostname} · '
+              '${m.cores} cores · CPU ${m.cpuPercent.toStringAsFixed(0)}%';
+        });
+      } else if (res.statusCode == 401) {
+        setState(() {
+          _metricsTestOk = false;
+          _metricsTestResult = 'Agent rejected the token (401).';
+        });
+      } else {
+        setState(() {
+          _metricsTestOk = false;
+          _metricsTestResult = 'Agent returned HTTP ${res.statusCode}.';
+        });
+      }
+    } catch (_) {
+      setState(() {
+        _metricsTestOk = false;
+        _metricsTestResult =
+            'Unreachable or timed out. Check the URL and that the phone is on '
+            'the same network (or the tunnel is up).';
+      });
+    } finally {
+      if (mounted) setState(() => _metricsTesting = false);
     }
   }
 
@@ -248,6 +313,47 @@ class _AddInstanceScreenState extends ConsumerState<AddInstanceScreen> {
             decoration: const InputDecoration(
               labelText: 'Agent token',
               prefixIcon: Icon(Icons.vpn_key_outlined),
+            ),
+          ),
+          if (_metricsTestResult != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color:
+                    (_metricsTestOk
+                            ? StatusColors.healthy
+                            : theme.colorScheme.error)
+                        .withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _metricsTestOk ? Icons.check_circle : Icons.error_outline,
+                    color: _metricsTestOk
+                        ? StatusColors.healthy
+                        : theme.colorScheme.error,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(_metricsTestResult!)),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _metricsTesting ? null : _testMetrics,
+              icon: _metricsTesting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.wifi_tethering),
+              label: Text(_metricsTesting ? 'Testing…' : 'Test agent'),
             ),
           ),
           const SizedBox(height: 18),
