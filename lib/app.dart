@@ -29,8 +29,20 @@ class CoolifyCompanionApp extends ConsumerWidget {
       // flash on save / account switch.
       themeAnimationDuration: Duration.zero,
       routerConfig: router,
-      builder: (context, child) =>
-          SplashGate(child: LockGate(child: child ?? const SizedBox())),
+      builder: (context, child) {
+        // Clamp OS text scaling so large system font / display-size settings
+        // (common on Android) don't blow up and clutter the layout, while
+        // still honouring moderate scaling for accessibility.
+        final mq = MediaQuery.of(context);
+        final clamped = mq.textScaler.clamp(
+          minScaleFactor: 1.0,
+          maxScaleFactor: 1.15,
+        );
+        return MediaQuery(
+          data: mq.copyWith(textScaler: clamped),
+          child: SplashGate(child: LockGate(child: child ?? const SizedBox())),
+        );
+      },
     );
   }
 }
