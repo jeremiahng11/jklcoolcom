@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../providers/instances_provider.dart';
+import '../../widgets/guide_widgets.dart';
 
 /// In-app guide for installing the metrics agent on a server. Self-contained
 /// (the agent script + service file are bundled as assets) so it works in App
@@ -44,7 +45,7 @@ class MetricsSetupScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
 
-          const _Step(
+          const GuideStep(
             n: 1,
             title: 'Get the agent script',
             body:
@@ -55,12 +56,12 @@ class MetricsSetupScreen extends ConsumerWidget {
             asset: 'agent/agent.py',
             copyLabel: 'Copy agent.py',
           ),
-          const _CodeBlock(text: _install),
+          const CodeBlock(_install),
 
-          const _Step(n: 2, title: 'Create a secret token'),
-          const _CodeBlock(text: _token),
+          const GuideStep(n: 2, title: 'Create a secret token'),
+          const CodeBlock(_token),
 
-          const _Step(
+          const GuideStep(
             n: 3,
             title: 'Install the service',
             body:
@@ -70,19 +71,19 @@ class MetricsSetupScreen extends ConsumerWidget {
             asset: 'agent/coolify-companion-agent.service',
             copyLabel: 'Copy service file',
           ),
-          const _CodeBlock(text: _service),
+          const CodeBlock(_service),
 
-          const _Step(n: 4, title: 'Start it'),
-          const _CodeBlock(text: _enable),
+          const GuideStep(n: 4, title: 'Start it'),
+          const CodeBlock(_enable),
 
-          const _Step(
+          const GuideStep(
             n: 5,
             title: 'Verify (optional)',
             body: 'Should return a JSON blob of metrics.',
           ),
-          const _CodeBlock(text: _verify),
+          const CodeBlock(_verify),
 
-          const _Step(
+          const GuideStep(
             n: 6,
             title: 'Connect it in the app',
             body:
@@ -97,112 +98,27 @@ class MetricsSetupScreen extends ConsumerWidget {
             icon: const Icon(Icons.tune),
             label: const Text('Open account settings'),
           ),
+
           const SizedBox(height: 24),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.public),
+              title: const Text('Access from anywhere'),
+              subtitle: const Text(
+                'Expose the agent on your own domain with Cloudflare Tunnel '
+                '(no open ports)',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/cloudflare-tunnel'),
+            ),
+          ),
+          const SizedBox(height: 12),
           Text(
             'The agent only needs Python 3 (preinstalled on Raspberry Pi OS / '
             'Debian). It runs as a non-root service, only reads system stats, '
-            'and should stay on your local network.',
+            'and should stay on your local network unless tunnelled.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Step extends StatelessWidget {
-  const _Step({required this.n, required this.title, this.body});
-  final int n;
-  final String title;
-  final String? body;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.only(top: 20, bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            radius: 13,
-            backgroundColor: scheme.primaryContainer,
-            child: Text(
-              '$n',
-              style: TextStyle(
-                color: scheme.onPrimaryContainer,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
-                ),
-                if (body != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    body!,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// A copyable code/command block.
-class _CodeBlock extends StatelessWidget {
-  const _CodeBlock({required this.text});
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      margin: const EdgeInsets.only(top: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0B0E14),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: scheme.outlineVariant),
-      ),
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-            child: SelectableText(
-              text,
-              style: const TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 12.5,
-                height: 1.5,
-                color: Color(0xFFD1D5DB),
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: () => _copy(context, text),
-              icon: const Icon(Icons.copy, size: 16),
-              label: const Text('Copy'),
             ),
           ),
         ],
@@ -225,29 +141,18 @@ class _AssetBlock extends StatelessWidget {
         final ready = snap.hasData;
         return Container(
           margin: const EdgeInsets.only(top: 8),
-          child: Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: ready ? () => _copy(context, snap.data!) : null,
-                  icon: const Icon(Icons.description_outlined, size: 18),
-                  label: Text(
-                    ready ? copyLabel : 'Loading…',
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
-            ],
+          child: OutlinedButton.icon(
+            onPressed: ready
+                ? () => copyToClipboard(context, snap.data!)
+                : null,
+            icon: const Icon(Icons.description_outlined, size: 18),
+            label: Text(
+              ready ? copyLabel : 'Loading…',
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         );
       },
     );
   }
-}
-
-void _copy(BuildContext context, String text) {
-  Clipboard.setData(ClipboardData(text: text));
-  ScaffoldMessenger.of(
-    context,
-  ).showSnackBar(const SnackBar(content: Text('Copied to clipboard')));
 }

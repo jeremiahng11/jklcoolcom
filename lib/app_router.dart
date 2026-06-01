@@ -19,6 +19,7 @@ import 'screens/servers/add_server_screen.dart';
 import 'screens/servers/server_detail_screen.dart';
 import 'screens/servers/servers_screen.dart';
 import 'screens/settings/cloud_tokens_screen.dart';
+import 'screens/settings/cloudflare_tunnel_screen.dart';
 import 'screens/settings/metrics_setup_screen.dart';
 import 'screens/servers/hetzner_provision_screen.dart';
 import 'screens/settings/private_keys_screen.dart';
@@ -122,6 +123,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/metrics-setup',
         builder: (_, _) => const MetricsSetupScreen(),
+      ),
+      GoRoute(
+        path: '/cloudflare-tunnel',
+        builder: (_, _) => const CloudflareTunnelScreen(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (_, _, navigationShell) =>
