@@ -45,8 +45,11 @@ class _AddServerScreenState extends ConsumerState<AddServerScreen> {
           Card(
             child: ListTile(
               leading: const Icon(Icons.rocket_launch_outlined),
-              title: const Text('Provision a new cloud server'),
-              subtitle: const Text('Spin up a Hetzner server from the app'),
+              title: const Text(
+                'Provision a new Hetzner server',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push('/servers/hetzner'),
             ),
@@ -84,24 +87,21 @@ class _AddServerScreenState extends ConsumerState<AddServerScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                flex: 2,
-                child: TextField(
-                  controller: _user,
-                  decoration: const InputDecoration(labelText: 'SSH user'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  controller: _port,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Port'),
-                ),
-              ),
-            ],
+          TextField(
+            controller: _user,
+            decoration: const InputDecoration(
+              labelText: 'SSH user',
+              prefixIcon: Icon(Icons.person_outline),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _port,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              labelText: 'SSH port',
+              prefixIcon: Icon(Icons.numbers),
+            ),
           ),
           const SizedBox(height: 12),
           keys.when(
