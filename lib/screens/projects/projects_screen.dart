@@ -14,7 +14,7 @@ class ProjectsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final projects = ref.watch(projectsProvider);
+    final projects = ref.watch(projectsDetailedProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Projects')),
       body: AsyncValueView<List<Project>>(

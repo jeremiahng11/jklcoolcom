@@ -79,6 +79,24 @@ final projectsProvider = FutureProvider<List<Project>>((ref) async {
   return client.projects();
 });
 
+/// Projects with full detail (incl. environments, which the list endpoint
+/// omits). Cascades off [projectsProvider] so invalidating it refreshes both.
+final projectsDetailedProvider = FutureProvider<List<Project>>((ref) async {
+  final client = ref.watch(coolifyClientProvider);
+  if (client == null) return const [];
+  final list = await ref.watch(projectsProvider.future);
+  final detailed = await Future.wait(
+    list.map((p) async {
+      try {
+        return await client.project(p.uuid);
+      } catch (_) {
+        return p;
+      }
+    }),
+  );
+  return detailed;
+});
+
 final privateKeysProvider = FutureProvider<List<PrivateKey>>((ref) async {
   final client = ref.watch(coolifyClientProvider);
   if (client == null) return const [];
