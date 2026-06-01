@@ -68,6 +68,29 @@ Grant the scopes you need when creating the token in Coolify:
 
 The app surfaces a clear message when a request fails because the token lacks a scope.
 
+## Live server metrics (optional)
+
+Coolify's API doesn't expose realtime CPU / memory / disk, so live metrics come
+from a tiny **on-host agent** included in [`agent/`](agent/). It reads `/proc`
+and serves token-protected JSON; the app polls it and shows a Live card on the
+dashboard (per-core CPU bars, CPU/RAM sparklines, disk, uptime).
+
+Quick start on the host (Debian/Raspberry Pi — full guide in
+[`agent/README.md`](agent/README.md)):
+
+```bash
+sudo mkdir -p /opt/coolify-companion-agent
+sudo cp agent/agent.py /opt/coolify-companion-agent/
+TOKEN=$(openssl rand -hex 24); echo "$TOKEN"   # use this in the app
+sudo cp agent/coolify-companion-agent.service /etc/systemd/system/
+sudo sed -i "s/CHANGE_ME/$TOKEN/" /etc/systemd/system/coolify-companion-agent.service
+sudo systemctl daemon-reload && sudo systemctl enable --now coolify-companion-agent
+```
+
+Then in the app: **edit your account → Live metrics** → set the agent URL
+(`http://<host-ip>:8088`) and the token. A `Dockerfile` is provided for running
+the agent as a container (e.g. via Coolify) instead.
+
 ## Project structure
 
 ```
