@@ -8,6 +8,7 @@ import 'screens/home_shell.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/onboarding/add_instance_screen.dart';
 import 'screens/onboarding/connect_guide_screen.dart';
+import 'screens/projects/project_detail_screen.dart';
 import 'screens/projects/projects_screen.dart';
 import 'screens/resources/application_detail_screen.dart';
 import 'screens/resources/create/create_application_screen.dart';
@@ -124,6 +125,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             ServerDetailScreen(uuid: state.pathParameters['uuid']!),
       ),
       GoRoute(path: '/projects', builder: (_, _) => const ProjectsScreen()),
+      GoRoute(
+        path: '/projects/:uuid',
+        builder: (_, state) =>
+            ProjectDetailScreen(uuid: state.pathParameters['uuid']!),
+      ),
       GoRoute(path: '/keys', builder: (_, _) => const PrivateKeysScreen()),
       GoRoute(
         path: '/cloud-tokens',
