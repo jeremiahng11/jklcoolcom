@@ -395,7 +395,7 @@ class _ServersSection extends ConsumerWidget {
             ...list.map(
               (s) => Card(
                 child: ListTile(
-                  isThreeLine: s.hasHardwareInfo,
+                  isThreeLine: true,
                   leading: Icon(
                     s.isReachable ? Icons.dns_rounded : Icons.cloud_off,
                     color: s.isReachable
@@ -407,22 +407,21 @@ class _ServersSection extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        s.connection,
+                        s.endpoint,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (s.hasHardwareInfo)
-                        Text(
-                          s.hardwareSummary,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
+                      Text(
+                        [
+                          'Port ${s.port}',
+                          if (s.hasHardwareInfo) s.hardwareSummary,
+                        ].join(' · '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
+                      ),
                     ],
                   ),
                   trailing: StatusBadge(

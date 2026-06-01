@@ -43,6 +43,9 @@ class Server {
 
   String get connection => '$user@$ip:$port';
 
+  /// `user@ip` without the port — for showing the port on a separate line.
+  String get endpoint => '$user@$ip';
+
   bool get hasHardwareInfo => cpus > 0 || memoryBytes > 0 || os.isNotEmpty;
 
   /// Total RAM as a friendly label, e.g. "8.0 GB".

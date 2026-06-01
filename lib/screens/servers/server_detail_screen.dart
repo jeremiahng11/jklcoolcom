@@ -39,7 +39,7 @@ class ServerDetailScreen extends ConsumerWidget {
           children: [
             DetailHeader(
               title: s.name,
-              subtitle: s.connection,
+              subtitle: s.endpoint,
               statusBadge: StatusBadge(
                 ResourceStatus.parse(
                   s.isReachable ? 'running:healthy' : 'exited',

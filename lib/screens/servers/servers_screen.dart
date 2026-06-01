@@ -68,14 +68,23 @@ class _ServerCard extends StatelessWidget {
           color: server.isReachable ? StatusColors.healthy : StatusColors.down,
         ),
         title: Text(server.name),
-        subtitle: Text(
-          [
-            server.connection,
-            if (server.proxyType.isNotEmpty) 'proxy: ${server.proxyType}',
-            if (server.isBuildServer) 'build server',
-          ].join(' · '),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(server.endpoint, maxLines: 1, overflow: TextOverflow.ellipsis),
+            Text(
+              [
+                'Port ${server.port}',
+                if (server.proxyType.isNotEmpty) 'proxy: ${server.proxyType}',
+                if (server.isBuildServer) 'build server',
+              ].join(' · '),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ),
         trailing: StatusBadge(
           ResourceStatus.parse(
