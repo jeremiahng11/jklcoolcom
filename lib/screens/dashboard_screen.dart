@@ -27,7 +27,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   @override
   void onAutoRefresh() {
     ref.invalidate(resourcesProvider);
-    ref.invalidate(serversProvider);
+    ref.invalidate(dashboardServersProvider);
   }
 
   @override
@@ -64,7 +64,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(resourcesProvider);
-          ref.invalidate(serversProvider);
+          ref.invalidate(dashboardServersProvider);
           await ref.read(resourcesProvider.future);
         },
         child: AsyncValueView<DashboardSummary>(
@@ -380,7 +380,7 @@ class _ServersSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final servers = ref.watch(serversProvider);
+    final servers = ref.watch(dashboardServersProvider);
     return servers.maybeWhen(
       data: (list) {
         if (list.isEmpty) return const SizedBox.shrink();
@@ -392,6 +392,7 @@ class _ServersSection extends ConsumerWidget {
             ...list.map(
               (s) => Card(
                 child: ListTile(
+                  isThreeLine: s.hasHardwareInfo,
                   leading: Icon(
                     s.isReachable ? Icons.dns_rounded : Icons.cloud_off,
                     color: s.isReachable
@@ -399,10 +400,27 @@ class _ServersSection extends ConsumerWidget {
                         : StatusColors.down,
                   ),
                   title: Text(s.name),
-                  subtitle: Text(
-                    s.connection,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        s.connection,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (s.hasHardwareInfo)
+                        Text(
+                          s.hardwareSummary,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                    ],
                   ),
                   trailing: StatusBadge(
                     ResourceStatus.parse(

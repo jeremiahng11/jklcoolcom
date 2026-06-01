@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/splash_provider.dart';
+import 'bolt_logo.dart';
 
 /// Shows an animated splash on first launch for ~3s, then fades out to reveal
 /// [child]. The app builds underneath while the splash plays, so the splash
@@ -174,7 +175,7 @@ class _SplashScreenState extends State<SplashScreen>
                         scale: 0.6 + 0.4 * _boltScale.value.clamp(0.0, 1.2),
                         child: CustomPaint(
                           size: const Size(120, 120),
-                          painter: _BoltPainter(glow: glow),
+                          painter: BoltPainter(glow: glow),
                         ),
                       ),
                     ),
@@ -226,40 +227,4 @@ class _SplashScreenState extends State<SplashScreen>
       },
     );
   }
-}
-
-/// Paints the same lightning bolt as the app icon, in white with a soft glow.
-class _BoltPainter extends CustomPainter {
-  _BoltPainter({required this.glow});
-
-  final double glow; // 0..1 pulse intensity
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final cx = w * 0.5;
-    final cy = size.height * 0.5;
-    final h = w * 0.92;
-
-    final path = Path()
-      ..moveTo(cx + 0.06 * h, cy - 0.52 * h)
-      ..lineTo(cx - 0.30 * h, cy + 0.07 * h)
-      ..lineTo(cx - 0.03 * h, cy + 0.07 * h)
-      ..lineTo(cx - 0.10 * h, cy + 0.52 * h)
-      ..lineTo(cx + 0.32 * h, cy - 0.10 * h)
-      ..lineTo(cx + 0.05 * h, cy - 0.10 * h)
-      ..close();
-
-    // Glow halo.
-    final glowPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.25 + 0.35 * glow)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 12 + 10 * glow);
-    canvas.drawPath(path, glowPaint);
-
-    // Solid bolt.
-    canvas.drawPath(path, Paint()..color = Colors.white);
-  }
-
-  @override
-  bool shouldRepaint(_BoltPainter old) => old.glow != glow;
 }

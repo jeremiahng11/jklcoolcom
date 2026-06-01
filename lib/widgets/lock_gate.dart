@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/lock_provider.dart';
 import '../providers/splash_provider.dart';
+import 'bolt_logo.dart';
 
 /// Wraps the whole app (via MaterialApp.builder). When the biometric lock is
 /// enabled and engaged, it overlays an opaque lock screen on top of [child]
@@ -88,26 +89,37 @@ class _LockScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final boltSize = MediaQuery.sizeOf(context).width * 0.95;
     return Material(
       color: scheme.surface,
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.lock_outline, size: 64, color: scheme.primary),
-            const SizedBox(height: 16),
-            Text(
-              'Coolify Companion is locked',
-              style: Theme.of(context).textTheme.titleMedium,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Large faded lightning behind the lock.
+          Opacity(
+            opacity: 0.07,
+            child: BoltMark(size: boltSize, color: scheme.primary),
+          ),
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.lock_outline, size: 64, color: scheme.primary),
+                const SizedBox(height: 16),
+                Text(
+                  'Coolify Companion is locked',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: onUnlock,
+                  icon: const Icon(Icons.fingerprint),
+                  label: const Text('Unlock'),
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: onUnlock,
-              icon: const Icon(Icons.fingerprint),
-              label: const Text('Unlock'),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

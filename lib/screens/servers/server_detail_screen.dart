@@ -81,6 +81,29 @@ class ServerDetailScreen extends ConsumerWidget {
                   InfoRow('Unreachable count', '${s.unreachableCount}'),
               ],
             ),
+            if (s.hasHardwareInfo)
+              DetailSection(
+                title: 'Hardware',
+                children: [
+                  if (s.os.isNotEmpty) InfoRow('OS', s.os),
+                  if (s.arch.isNotEmpty) InfoRow('Architecture', s.arch),
+                  if (s.cpus > 0) InfoRow('CPU cores', '${s.cpus}'),
+                  if (s.memoryBytes > 0) InfoRow('Total memory', s.memoryLabel),
+                  if (s.uptimeSince != null)
+                    InfoRow('Uptime', s.uptimeLabel(DateTime.now())),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      'Live CPU load, memory and disk usage are collected by '
+                      'Coolify Sentinel but are not exposed by the API — view '
+                      'the realtime charts in the Coolify dashboard.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             if (s.description.isNotEmpty)
               DetailSection(
                 title: 'Description',

@@ -47,6 +47,24 @@ final serversProvider = FutureProvider<List<Server>>((ref) async {
   return client.servers();
 });
 
+/// Servers with full detail (incl. `server_metadata` hardware info, which the
+/// plain list endpoint omits). Used by the dashboard to show capacity/uptime.
+final dashboardServersProvider = FutureProvider<List<Server>>((ref) async {
+  final client = ref.watch(coolifyClientProvider);
+  if (client == null) return const [];
+  final list = await client.servers();
+  final detailed = await Future.wait(
+    list.map((s) async {
+      try {
+        return await client.server(s.uuid);
+      } catch (_) {
+        return s;
+      }
+    }),
+  );
+  return detailed;
+});
+
 /// Resources (apps/dbs/services) running on a given server.
 final serverResourcesProvider =
     FutureProvider.family<List<ResourceSummary>, String>((ref, uuid) async {
