@@ -42,6 +42,24 @@ class _AddServerScreenState extends ConsumerState<AddServerScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.rocket_launch_outlined),
+              title: const Text('Provision a new cloud server'),
+              subtitle: const Text('Spin up a Hetzner server from the app'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/servers/hetzner'),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Or connect an existing server below — works with any provider '
+            '(Hetzner, DigitalOcean, AWS, Linode, your own VPS…) over SSH.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 16),
           TextField(
             controller: _name,
             decoration: const InputDecoration(
