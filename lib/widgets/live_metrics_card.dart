@@ -37,10 +37,10 @@ class _LiveMetricsCardState extends ConsumerState<LiveMetricsCard> {
           leading: const Icon(Icons.speed_outlined),
           title: const Text('Add live metrics'),
           subtitle: const Text(
-            'Run the agent on your server to see live CPU, memory, disk & uptime',
+            'See live CPU, memory, disk & uptime — tap for the quick setup guide',
           ),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () => context.push('/edit-instance/${instance.id}'),
+          onTap: () => context.push('/metrics-setup'),
         ),
       );
     }

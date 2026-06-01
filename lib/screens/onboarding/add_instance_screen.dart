@@ -205,11 +205,25 @@ class _AddInstanceScreenState extends ConsumerState<AddInstanceScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          Text('Live metrics (optional)', style: theme.textTheme.labelLarge),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Live metrics (optional)',
+                  style: theme.textTheme.labelLarge,
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () => context.push('/metrics-setup'),
+                icon: const Icon(Icons.help_outline, size: 18),
+                label: const Text('Setup guide'),
+              ),
+            ],
+          ),
           const SizedBox(height: 4),
           Text(
             'Run the metrics agent on your server to see live CPU, memory, disk '
-            '& uptime on the dashboard. See agent/README.md.',
+            '& uptime on the dashboard.',
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),

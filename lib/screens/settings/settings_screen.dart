@@ -84,6 +84,13 @@ class SettingsScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/cloud-tokens'),
           ),
+          ListTile(
+            leading: const Icon(Icons.speed_outlined),
+            title: const Text('Live metrics setup'),
+            subtitle: const Text('Install the agent for CPU / RAM / disk'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push('/metrics-setup'),
+          ),
           const Divider(),
           _header(context, 'Security'),
           _AppLockTile(),
