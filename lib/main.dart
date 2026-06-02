@@ -17,10 +17,16 @@ void callbackDispatcher() {
   });
 }
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  // Paint the UI first — never block the first frame on a plugin. The
+  // background worker is set up afterwards, off the launch path.
+  runApp(const ProviderScope(child: CoolifyCompanionApp()));
+  _initBackgroundWorker();
+}
+
+Future<void> _initBackgroundWorker() async {
   try {
     await Workmanager().initialize(callbackDispatcher);
   } catch (_) {}
-  runApp(const ProviderScope(child: CoolifyCompanionApp()));
 }
