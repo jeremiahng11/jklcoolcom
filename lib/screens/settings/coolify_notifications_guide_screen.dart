@@ -69,6 +69,12 @@ class CoolifyNotificationsGuideScreen extends StatelessWidget {
                     title: Text('Pushover / Email'),
                     subtitle: Text('Also supported'),
                   ),
+                  ListTile(
+                    dense: true,
+                    leading: Icon(Icons.webhook_outlined),
+                    title: Text('Webhook'),
+                    subtitle: Text('Posts to any URL — pipe it into ntfy'),
+                  ),
                 ],
               ),
             ),
@@ -101,6 +107,29 @@ class CoolifyNotificationsGuideScreen extends StatelessWidget {
           _Bullet(
             'In Coolify → Notifications → Telegram: paste the bot token + chat '
             'id.',
+            muted,
+          ),
+
+          const GuideSection('Webhook → ntfy'),
+          _Bullet(
+            'Spotted the Webhook box in Coolify? It just POSTs each alert to a '
+            'URL you choose. A phone can\'t receive that directly, but ntfy '
+            'can — and it turns the POST into a push on your device.',
+            muted,
+          ),
+          _Bullet(
+            'Pick a private topic name (e.g. coolify-7f3a9c) and install the '
+            'free ntfy app and subscribe to it.',
+            muted,
+          ),
+          _Bullet(
+            'In Coolify → Notifications → Webhook, set the URL to '
+            'https://ntfy.sh/your-topic — that\'s the whole setup.',
+            muted,
+          ),
+          _Bullet(
+            'Same result as the ntfy channel above; use whichever box your '
+            'Coolify version shows.',
             muted,
           ),
 
