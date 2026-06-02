@@ -9,6 +9,7 @@ import 'screens/home_shell.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/onboarding/add_instance_screen.dart';
 import 'screens/onboarding/connect_guide_screen.dart';
+import 'screens/notifications/notifications_screen.dart';
 import 'screens/projects/project_detail_screen.dart';
 import 'screens/projects/projects_screen.dart';
 import 'screens/resources/application_detail_screen.dart';
@@ -130,6 +131,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/projects/:uuid',
         builder: (_, state) =>
             ProjectDetailScreen(uuid: state.pathParameters['uuid']!),
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (_, _) => const NotificationsScreen(),
       ),
       GoRoute(path: '/keys', builder: (_, _) => const PrivateKeysScreen()),
       GoRoute(

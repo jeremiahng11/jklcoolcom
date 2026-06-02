@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../providers/instances_provider.dart';
 import '../../providers/lock_provider.dart';
+import '../../providers/monitor_provider.dart';
 import '../../providers/resource_providers.dart';
 import '../../providers/theme_provider.dart';
 import '../../widgets/account_action.dart';
@@ -102,6 +103,7 @@ class SettingsScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push('/coolify-notifications-guide'),
           ),
+          _InAppAlertsTile(),
           const Divider(),
           _header(context, 'Security'),
           _AppLockTile(),
@@ -184,6 +186,35 @@ class SettingsScreen extends ConsumerWidget {
       ),
     ),
   );
+}
+
+class _InAppAlertsTile extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final enabled = ref.watch(monitorProvider);
+    return SwitchListTile(
+      secondary: const Icon(Icons.notifications_active_outlined),
+      title: const Text('In-app alerts'),
+      subtitle: const Text(
+        'The app checks your resources and notifies you of status changes. '
+        'Works while open; background checks are best-effort (~15 min).',
+      ),
+      isThreeLine: true,
+      value: enabled,
+      onChanged: (v) async {
+        await ref.read(monitorProvider.notifier).setEnabled(v);
+        if (v && !ref.read(monitorProvider) && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Notification permission denied. Enable it in system settings.',
+              ),
+            ),
+          );
+        }
+      },
+    );
+  }
 }
 
 class _AppLockTile extends ConsumerWidget {

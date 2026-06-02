@@ -3,6 +3,11 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Biometric app-lock (local_auth). -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+    <!-- Local notifications for in-app alerts (Android 13+). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Let the background monitor (workmanager) reschedule after a reboot. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <application
         android:label="Coolify Companion"
         android:name="${applicationName}"
