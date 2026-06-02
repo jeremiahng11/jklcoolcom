@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'navigation.dart';
 import 'providers/instances_provider.dart';
 import 'screens/deployments/deployments_screen.dart';
-import 'screens/notifications/notifications_screen.dart';
 import 'screens/home_shell.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/onboarding/add_instance_screen.dart';
@@ -27,7 +26,6 @@ import 'screens/settings/cloud_tokens_screen.dart';
 import 'screens/settings/cloudflare_tunnel_screen.dart';
 import 'screens/settings/coolify_notifications_guide_screen.dart';
 import 'screens/settings/metrics_setup_screen.dart';
-import 'screens/settings/push_server_guide_screen.dart';
 import 'screens/servers/hetzner_provision_screen.dart';
 import 'screens/settings/private_keys_screen.dart';
 import 'screens/settings/settings_screen.dart';
@@ -140,16 +138,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/team', builder: (_, _) => const TeamScreen()),
       GoRoute(
-        path: '/notifications',
-        builder: (_, _) => const NotificationsScreen(),
-      ),
-      GoRoute(
         path: '/coolify-notifications-guide',
         builder: (_, _) => const CoolifyNotificationsGuideScreen(),
-      ),
-      GoRoute(
-        path: '/push-server-guide',
-        builder: (_, _) => const PushServerGuideScreen(),
       ),
       GoRoute(
         path: '/metrics-setup',
