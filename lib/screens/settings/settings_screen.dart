@@ -180,10 +180,30 @@ class SettingsScreen extends ConsumerWidget {
   );
 }
 
-class _PushTile extends ConsumerWidget {
+class _PushTile extends ConsumerStatefulWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_PushTile> createState() => _PushTileState();
+}
+
+class _PushTileState extends ConsumerState<_PushTile> {
+  final _server = TextEditingController();
+  bool _seeded = false;
+
+  @override
+  void dispose() {
+    _server.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final push = ref.watch(pushProvider);
+    final theme = Theme.of(context);
+    if (!_seeded && push.serverUrl.isNotEmpty) {
+      _server.text = push.serverUrl;
+      _seeded = true;
+    }
+
     return Column(
       children: [
         SwitchListTile(
@@ -199,26 +219,75 @@ class _PushTile extends ConsumerWidget {
               ? (v) => ref.read(pushProvider.notifier).setEnabled(v)
               : null,
         ),
-        if (push.enabled && push.token != null)
-          ListTile(
-            leading: const Icon(Icons.tag),
-            title: const Text('Device token'),
-            subtitle: Text(
-              push.token!,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
-            ),
-            trailing: IconButton(
-              icon: const Icon(Icons.copy, size: 18),
-              onPressed: () {
-                Clipboard.setData(ClipboardData(text: push.token!));
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('Token copied')));
-              },
+        if (push.enabled) ...[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _server,
+                        keyboardType: TextInputType.url,
+                        autocorrect: false,
+                        decoration: InputDecoration(
+                          labelText: 'Notification server URL',
+                          hintText: 'https://push.yourdomain.com',
+                          isDense: true,
+                          prefixIcon: const Icon(Icons.dns_outlined),
+                          helperText: push.serverUrl.isEmpty
+                              ? 'Optional — for automatic deploy/health alerts'
+                              : (push.registered
+                                    ? 'Registered ✓'
+                                    : 'Not registered — check the URL'),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: () => ref
+                          .read(pushProvider.notifier)
+                          .setServerUrl(_server.text),
+                      child: const Text('Save'),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
+          if (push.token != null)
+            ListTile(
+              leading: const Icon(Icons.tag),
+              title: const Text('Device token'),
+              subtitle: Text(
+                push.token!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+              ),
+              trailing: IconButton(
+                icon: const Icon(Icons.copy, size: 18),
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: push.token!));
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('Token copied')));
+                },
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            child: Text(
+              'No server? You can still send test notifications from the '
+              'Firebase console using the token above.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
