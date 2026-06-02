@@ -2,16 +2,14 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:workmanager/workmanager.dart';
 
 import '../services/monitor.dart';
 import 'notifications_provider.dart';
 
-const _taskName = 'coolify-monitor';
-
-/// In-app alerts: polls the active Coolify and raises local notifications.
-/// Runs a foreground timer while the app is alive and (best-effort) a periodic
-/// background task on Android.
+/// In-app alerts: while the app is open, polls the active Coolify instance and
+/// raises local notifications on status changes. There is no background worker —
+/// for alerts while the app is closed, users wire Coolify's own notification
+/// channels (Telegram / ntfy / webhook), which the guide screen explains.
 class MonitorNotifier extends Notifier<bool> {
   static const _key = 'inapp_alerts_enabled';
   Timer? _timer;
@@ -57,20 +55,8 @@ class MonitorNotifier extends Notifier<bool> {
         return;
       }
       _start();
-      try {
-        await Workmanager().registerPeriodicTask(
-          _taskName,
-          _taskName,
-          frequency: const Duration(minutes: 15),
-          constraints: Constraints(networkType: NetworkType.connected),
-          existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
-        );
-      } catch (_) {}
     } else {
       _timer?.cancel();
-      try {
-        await Workmanager().cancelByUniqueName(_taskName);
-      } catch (_) {}
     }
     await prefs.setBool(_key, value);
     state = value;

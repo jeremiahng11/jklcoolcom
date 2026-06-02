@@ -196,8 +196,9 @@ class _InAppAlertsTile extends ConsumerWidget {
       secondary: const Icon(Icons.notifications_active_outlined),
       title: const Text('In-app alerts'),
       subtitle: const Text(
-        'The app checks your resources and notifies you of status changes. '
-        'Works while open; background checks are best-effort (~15 min).',
+        'While the app is open, it checks your resources and notifies you of '
+        'status changes. For alerts when it\'s closed, use real-time alerts '
+        'above.',
       ),
       isThreeLine: true,
       value: enabled,
