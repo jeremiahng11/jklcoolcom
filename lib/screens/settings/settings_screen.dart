@@ -95,6 +95,18 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const Divider(),
           _header(context, 'Notifications'),
+          Card(
+            margin: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+            child: ListTile(
+              leading: const Icon(Icons.campaign_outlined),
+              title: const Text('Real-time alerts (recommended)'),
+              subtitle: const Text(
+                'Via Coolify — Telegram, ntfy, Discord. No server needed.',
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push('/coolify-notifications-guide'),
+            ),
+          ),
           _PushTile(),
           const Divider(),
           _header(context, 'Security'),
@@ -208,16 +220,27 @@ class _PushTileState extends ConsumerState<_PushTile> {
       children: [
         SwitchListTile(
           secondary: const Icon(Icons.notifications_outlined),
-          title: const Text('Push notifications'),
+          title: const Text('In-app push (advanced)'),
           subtitle: Text(
             push.available
-                ? 'Get notified about deployments and resource health'
+                ? 'Branded alerts in this app — needs a self-hosted push server'
                 : 'Not available — Firebase isn\'t configured for this build',
           ),
           value: push.enabled,
           onChanged: push.available
               ? (v) => ref.read(pushProvider.notifier).setEnabled(v)
               : null,
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: TextButton.icon(
+              onPressed: () => context.push('/push-server-guide'),
+              icon: const Icon(Icons.help_outline, size: 18),
+              label: const Text('How to set up your own push server'),
+            ),
+          ),
         ),
         if (push.enabled) ...[
           Padding(
