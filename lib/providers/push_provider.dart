@@ -3,6 +3,10 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/app_notification.dart';
+import '../navigation.dart';
+import 'notifications_provider.dart';
+
 class PushState {
   const PushState({this.enabled = false, this.token, this.available = true});
 
@@ -71,7 +75,9 @@ class PushNotifier extends Notifier<PushState> {
   void _listen() {
     if (_listening) return;
     _listening = true;
+    // Foreground messages: record in the inbox and show a local notification.
     FirebaseMessaging.onMessage.listen((message) {
+      _record(message);
       final n = message.notification;
       if (n == null) return;
       _local.show(
@@ -89,6 +95,36 @@ class PushNotifier extends Notifier<PushState> {
         ),
       );
     });
+    // Notification tapped while the app was backgrounded.
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      _record(message);
+      _navigate(message);
+    });
+  }
+
+  /// Store a received message in the in-app inbox.
+  void _record(RemoteMessage m) {
+    final n = m.notification;
+    final data = m.data;
+    final id = m.messageId ?? '${DateTime.now().microsecondsSinceEpoch}';
+    ref
+        .read(notificationsProvider.notifier)
+        .add(
+          AppNotification(
+            id: id,
+            title: n?.title ?? data['title']?.toString() ?? 'Notification',
+            body: n?.body ?? data['body']?.toString() ?? '',
+            route: AppNotification.routeFromData(data),
+            time: DateTime.now(),
+            read: false,
+          ),
+        );
+  }
+
+  /// Deep-link to the screen the notification points at, if any.
+  void _navigate(RemoteMessage m) {
+    final route = AppNotification.routeFromData(m.data);
+    if (route != null) navigateFromNotification(route);
   }
 
   /// Requests permission, sets up listeners and fetches the token. Returns true
@@ -105,6 +141,15 @@ class PushNotifier extends Notifier<PushState> {
       final token = await messaging.getToken();
       state = state.copyWith(token: token);
       messaging.onTokenRefresh.listen((t) => state = state.copyWith(token: t));
+      // App launched from terminated by tapping a notification.
+      final initial = await messaging.getInitialMessage();
+      if (initial != null) {
+        _record(initial);
+        Future.delayed(
+          const Duration(milliseconds: 600),
+          () => _navigate(initial),
+        );
+      }
       return true;
     } catch (_) {
       state = state.copyWith(available: false);

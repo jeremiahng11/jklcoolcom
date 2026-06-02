@@ -12,6 +12,7 @@ import '../widgets/account_action.dart';
 import '../widgets/async_value_view.dart';
 import '../widgets/auto_refresh.dart';
 import '../widgets/live_metrics_card.dart';
+import '../widgets/notification_bell.dart';
 import '../widgets/resource_card.dart';
 import '../widgets/status_badge.dart';
 import 'resources/resources_screen.dart';
@@ -55,6 +56,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           ],
         ),
         actions: [
+          const NotificationBell(),
           IconButton(
             tooltip: 'Refresh',
             onPressed: refreshNow,

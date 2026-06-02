@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'navigation.dart';
 import 'providers/instances_provider.dart';
 import 'screens/deployments/deployments_screen.dart';
+import 'screens/notifications/notifications_screen.dart';
 import 'screens/home_shell.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/onboarding/add_instance_screen.dart';
@@ -29,7 +31,6 @@ import 'screens/settings/private_keys_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/settings/team_screen.dart';
 
-final _rootKey = GlobalKey<NavigatorState>();
 final _shellKeys = List.generate(4, (_) => GlobalKey<NavigatorState>());
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -49,7 +50,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.onDispose(refresh.dispose);
 
   return GoRouter(
-    navigatorKey: _rootKey,
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/dashboard',
     refreshListenable: refresh,
     redirect: (context, state) {
@@ -136,6 +137,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, _) => const CloudTokensScreen(),
       ),
       GoRoute(path: '/team', builder: (_, _) => const TeamScreen()),
+      GoRoute(
+        path: '/notifications',
+        builder: (_, _) => const NotificationsScreen(),
+      ),
       GoRoute(
         path: '/metrics-setup',
         builder: (_, _) => const MetricsSetupScreen(),
