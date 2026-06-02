@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../providers/instances_provider.dart';
 import '../../providers/lock_provider.dart';
+import '../../providers/push_provider.dart';
 import '../../providers/resource_providers.dart';
 import '../../providers/theme_provider.dart';
 import '../../widgets/account_action.dart';
@@ -92,6 +94,9 @@ class SettingsScreen extends ConsumerWidget {
             onTap: () => context.push('/metrics-setup'),
           ),
           const Divider(),
+          _header(context, 'Notifications'),
+          _PushTile(),
+          const Divider(),
           _header(context, 'Security'),
           _AppLockTile(),
           const Divider(),
@@ -173,6 +178,50 @@ class SettingsScreen extends ConsumerWidget {
       ),
     ),
   );
+}
+
+class _PushTile extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final push = ref.watch(pushProvider);
+    return Column(
+      children: [
+        SwitchListTile(
+          secondary: const Icon(Icons.notifications_outlined),
+          title: const Text('Push notifications'),
+          subtitle: Text(
+            push.available
+                ? 'Get notified about deployments and resource health'
+                : 'Not available — Firebase isn\'t configured for this build',
+          ),
+          value: push.enabled,
+          onChanged: push.available
+              ? (v) => ref.read(pushProvider.notifier).setEnabled(v)
+              : null,
+        ),
+        if (push.enabled && push.token != null)
+          ListTile(
+            leading: const Icon(Icons.tag),
+            title: const Text('Device token'),
+            subtitle: Text(
+              push.token!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+            ),
+            trailing: IconButton(
+              icon: const Icon(Icons.copy, size: 18),
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: push.token!));
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('Token copied')));
+              },
+            ),
+          ),
+      ],
+    );
+  }
 }
 
 class _AppLockTile extends ConsumerWidget {
