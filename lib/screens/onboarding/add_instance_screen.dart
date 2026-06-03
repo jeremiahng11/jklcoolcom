@@ -265,11 +265,16 @@ class _AddInstanceScreenState extends ConsumerState<AddInstanceScreen> {
             controller: _url,
             keyboardType: TextInputType.url,
             autocorrect: false,
-            decoration: const InputDecoration(
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
               labelText: 'Instance URL',
-              hintText: 'https://coolify.example.com  or  localhost:8000',
-              prefixIcon: Icon(Icons.link),
-              helperText: 'The /api/v1 suffix is added automatically.',
+              hintText: 'coolify.example.com  or  192.168.0.10:8000',
+              prefixIcon: const Icon(Icons.link),
+              helperText: _url.text.trim().isEmpty
+                  ? 'No need to type http(s):// — it\'s added automatically '
+                        '(https for domains, http for local), along with /api/v1.'
+                  : 'Connects to ${CoolifyInstance.normaliseBaseUrl(_url.text)}',
+              helperMaxLines: 2,
             ),
           ),
           const SizedBox(height: 14),
@@ -360,10 +365,15 @@ class _AddInstanceScreenState extends ConsumerState<AddInstanceScreen> {
             controller: _metricsUrl,
             keyboardType: TextInputType.url,
             autocorrect: false,
-            decoration: const InputDecoration(
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
               labelText: 'Metrics agent URL',
-              hintText: 'http://192.168.0.147:8088',
-              prefixIcon: Icon(Icons.speed_outlined),
+              hintText: '192.168.0.147:8088',
+              prefixIcon: const Icon(Icons.speed_outlined),
+              helperText: _metricsUrl.text.trim().isEmpty
+                  ? 'Scheme optional — defaults to http://'
+                  : 'Connects to ${CoolifyInstance.normaliseMetricsUrl(_metricsUrl.text)}',
+              helperMaxLines: 2,
             ),
           ),
           const SizedBox(height: 12),
