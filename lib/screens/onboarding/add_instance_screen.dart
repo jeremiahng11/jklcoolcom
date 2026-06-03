@@ -204,7 +204,14 @@ class _AddInstanceScreenState extends ConsumerState<AddInstanceScreen> {
         title: Text(_editing != null ? 'Edit account' : 'Add Coolify account'),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        // Pad the bottom past the Android gesture/nav bar so the last button
+        // isn't hidden under the system menu.
+        padding: EdgeInsets.fromLTRB(
+          20,
+          20,
+          20,
+          20 + MediaQuery.viewPaddingOf(context).bottom,
+        ),
         children: [
           if (widget.isFirst) ...[
             Icon(
@@ -278,7 +285,46 @@ class _AddInstanceScreenState extends ConsumerState<AddInstanceScreen> {
               helperMaxLines: 3,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
+          if (_testResult != null) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color:
+                    (_testOk ? StatusColors.healthy : theme.colorScheme.error)
+                        .withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _testOk ? Icons.check_circle : Icons.error_outline,
+                    color: _testOk
+                        ? StatusColors.healthy
+                        : theme.colorScheme.error,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(_testResult!)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _testing ? null : _test,
+              icon: _testing
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.wifi_tethering),
+              label: Text(_testing ? 'Testing…' : 'Test connection'),
+            ),
+          ),
+          const Divider(height: 40),
           Row(
             children: [
               Expanded(
@@ -394,45 +440,7 @@ class _AddInstanceScreenState extends ConsumerState<AddInstanceScreen> {
               );
             }).toList(),
           ),
-          const SizedBox(height: 20),
-          if (_testResult != null)
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color:
-                    (_testOk ? StatusColors.healthy : theme.colorScheme.error)
-                        .withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    _testOk ? Icons.check_circle : Icons.error_outline,
-                    color: _testOk
-                        ? StatusColors.healthy
-                        : theme.colorScheme.error,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(child: Text(_testResult!)),
-                ],
-              ),
-            ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: _testing ? null : _test,
-              icon: _testing
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.wifi_tethering),
-              label: Text(_testing ? 'Testing…' : 'Test connection'),
-            ),
-          ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
