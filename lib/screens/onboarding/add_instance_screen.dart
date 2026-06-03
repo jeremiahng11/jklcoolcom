@@ -202,6 +202,13 @@ class _AddInstanceScreenState extends ConsumerState<AddInstanceScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(_editing != null ? 'Edit account' : 'Add Coolify account'),
+        actions: [
+          IconButton(
+            tooltip: _editing != null ? 'Save changes' : 'Add account',
+            onPressed: _save,
+            icon: const Icon(Icons.save_outlined),
+          ),
+        ],
       ),
       body: ListView(
         // Pad the bottom past the Android gesture/nav bar so the last button
@@ -439,15 +446,6 @@ class _AddInstanceScreenState extends ConsumerState<AddInstanceScreen> {
                 ),
               );
             }).toList(),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: _save,
-              icon: const Icon(Icons.save_outlined),
-              label: Text(_editing != null ? 'Save changes' : 'Add account'),
-            ),
           ),
         ],
       ),
