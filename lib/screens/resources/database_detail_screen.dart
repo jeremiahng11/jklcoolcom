@@ -186,6 +186,38 @@ class _Settings extends ConsumerWidget {
           value: db.isPublic,
           onChanged: (v) => _patch(context, ref, {'is_public': v}),
         ),
+        const Divider(height: 32),
+        Text('Health check', style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: 4),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: const Text('Health check enabled'),
+          subtitle: const Text('Probe the database container for liveness'),
+          value: db.healthCheckEnabled,
+          onChanged: (v) => _patch(context, ref, {'health_check_enabled': v}),
+        ),
+        const SizedBox(height: 8),
+        EditableField(
+          label: 'Interval (seconds)',
+          initialValue: '${db.healthCheckInterval}',
+          onSave: (v) => _patchInt(context, ref, 'health_check_interval', v),
+        ),
+        EditableField(
+          label: 'Timeout (seconds)',
+          initialValue: '${db.healthCheckTimeout}',
+          onSave: (v) => _patchInt(context, ref, 'health_check_timeout', v),
+        ),
+        EditableField(
+          label: 'Retries',
+          initialValue: '${db.healthCheckRetries}',
+          onSave: (v) => _patchInt(context, ref, 'health_check_retries', v),
+        ),
+        EditableField(
+          label: 'Start period (seconds)',
+          initialValue: '${db.healthCheckStartPeriod}',
+          onSave: (v) =>
+              _patchInt(context, ref, 'health_check_start_period', v),
+        ),
         const SizedBox(height: 24),
         DangerZone(
           label: 'Delete database',
@@ -209,6 +241,22 @@ class _Settings extends ConsumerWidget {
       success: 'Saved',
     );
     if (ok) ref.invalidate(databaseProvider(db.uuid));
+  }
+
+  Future<void> _patchInt(
+    BuildContext context,
+    WidgetRef ref,
+    String key,
+    String value,
+  ) async {
+    final n = int.tryParse(value.trim());
+    if (n == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Enter a whole number.')));
+      return;
+    }
+    await _patch(context, ref, {key: n});
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref) async {

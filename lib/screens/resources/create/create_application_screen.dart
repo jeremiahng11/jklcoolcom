@@ -119,8 +119,9 @@ class _CreateApplicationScreenState
               controller: _ports,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
-                labelText: 'Exposed port',
+                labelText: 'Exposed port (optional)',
                 prefixIcon: Icon(Icons.lan_outlined),
+                helperText: 'Leave blank for an app with no exposed port.',
               ),
             ),
             const SizedBox(height: 12),
@@ -178,7 +179,9 @@ class _CreateApplicationScreenState
             TextField(
               controller: _ports,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Exposed port'),
+              decoration: const InputDecoration(
+                labelText: 'Exposed port (optional)',
+              ),
             ),
           ],
           if (_source == AppSource.dockerfile)
@@ -232,7 +235,6 @@ class _CreateApplicationScreenState
           'git_repository': _repo.text.trim(),
           'git_branch': _branch.text.trim(),
           'build_pack': _buildPack,
-          'ports_exposes': _ports.text.trim(),
         });
         call = () => client.createPublicApp(body);
         break;
@@ -245,7 +247,6 @@ class _CreateApplicationScreenState
           'git_repository': _repo.text.trim(),
           'git_branch': _branch.text.trim(),
           'build_pack': _buildPack,
-          'ports_exposes': _ports.text.trim(),
           'private_key_uuid': _privateKeyUuid,
         });
         call = () => client.createPrivateDeployKeyApp(body);
@@ -259,7 +260,6 @@ class _CreateApplicationScreenState
           'git_repository': _repo.text.trim(),
           'git_branch': _branch.text.trim(),
           'build_pack': _buildPack,
-          'ports_exposes': _ports.text.trim(),
           'github_app_uuid': _githubAppUuid,
         });
         call = () => client.createPrivateGithubApp(body);
@@ -272,10 +272,15 @@ class _CreateApplicationScreenState
         body.addAll({
           'docker_registry_image_name': _image.text.trim(),
           'docker_registry_image_tag': _imageTag.text.trim(),
-          'ports_exposes': _ports.text.trim(),
         });
         call = () => client.createDockerImageApp(body);
         break;
+    }
+
+    // Coolify 4.1.2+ allows portless apps: only send a port if one was given.
+    final ports = _ports.text.trim();
+    if (ports.isNotEmpty && _source != AppSource.dockerfile) {
+      body['ports_exposes'] = ports;
     }
 
     final ok = await runAction(

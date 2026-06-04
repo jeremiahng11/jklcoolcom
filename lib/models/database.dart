@@ -56,6 +56,14 @@ class CoolifyDatabase {
 
   String get engineLabel => engine?.label ?? 'Database';
 
+  // Standalone database health-check settings (Coolify 4.1.2+).
+  bool get healthCheckEnabled => raw['health_check_enabled'] as bool? ?? true;
+  int get healthCheckInterval => asInt(raw['health_check_interval']) ?? 15;
+  int get healthCheckTimeout => asInt(raw['health_check_timeout']) ?? 5;
+  int get healthCheckRetries => asInt(raw['health_check_retries']) ?? 5;
+  int get healthCheckStartPeriod =>
+      asInt(raw['health_check_start_period']) ?? 5;
+
   factory CoolifyDatabase.fromJson(Map<String, dynamic> json) {
     final type = asStringOr(
       json['type'] ?? json['database_type'] ?? json['image'] ?? '',

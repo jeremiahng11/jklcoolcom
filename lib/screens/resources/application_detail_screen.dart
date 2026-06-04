@@ -345,6 +345,11 @@ class _Settings extends ConsumerWidget {
           initialValue: app.startCommand,
           onSave: (v) => _patch(context, ref, {'start_command': v}),
         ),
+        EditableField(
+          label: 'Custom Docker run options',
+          initialValue: (app.raw['custom_docker_run_options'] ?? '').toString(),
+          onSave: (v) => _patch(context, ref, {'custom_docker_run_options': v}),
+        ),
         SwitchListTile(
           title: const Text('Auto deploy on push'),
           value: app.isAutoDeployEnabled,
