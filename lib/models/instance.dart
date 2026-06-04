@@ -43,6 +43,11 @@ class CoolifyInstance {
 
   String get host => Uri.tryParse(baseUrl)?.host ?? baseUrl;
 
+  /// Coolify's web terminal page — pick a server + container and get a real
+  /// PTY shell. (An in-app terminal isn't possible: it needs Coolify's
+  /// session-authenticated websocket, not the API token.)
+  String get terminalUrl => '$dashboardUrl/terminal';
+
   CoolifyInstance copyWith({
     String? label,
     String? baseUrl,

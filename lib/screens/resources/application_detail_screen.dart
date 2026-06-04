@@ -13,6 +13,7 @@ import '../../widgets/action_runner.dart';
 import '../../widgets/async_value_view.dart';
 import '../../widgets/env_var_editor.dart';
 import '../../widgets/log_console.dart';
+import '../../widgets/open_terminal_button.dart';
 import '../../widgets/scheduled_tasks_editor.dart';
 import '../../widgets/status_badge.dart';
 import '../../widgets/storage_editor.dart';
@@ -33,6 +34,7 @@ class ApplicationDetailScreen extends ConsumerWidget {
         appBar: AppBar(
           title: Text(app.value?.name ?? 'Application'),
           actions: [
+            const OpenTerminalButton(),
             IconButton(
               onPressed: () => ref.invalidate(applicationProvider(uuid)),
               icon: const Icon(Icons.refresh),

@@ -8,6 +8,7 @@ import '../../providers/resource_providers.dart';
 import '../../widgets/action_runner.dart';
 import '../../widgets/async_value_view.dart';
 import '../../widgets/env_var_editor.dart';
+import '../../widgets/open_terminal_button.dart';
 import '../../widgets/scheduled_tasks_editor.dart';
 import '../../widgets/status_badge.dart';
 import '../../widgets/storage_editor.dart';
@@ -27,6 +28,7 @@ class ServiceDetailScreen extends ConsumerWidget {
         appBar: AppBar(
           title: Text(svc.value?.name ?? 'Service'),
           actions: [
+            const OpenTerminalButton(),
             IconButton(
               onPressed: () => ref.invalidate(serviceProvider(uuid)),
               icon: const Icon(Icons.refresh),

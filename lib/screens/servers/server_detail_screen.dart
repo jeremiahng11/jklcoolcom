@@ -9,6 +9,7 @@ import '../../providers/instances_provider.dart';
 import '../../providers/resource_providers.dart';
 import '../../widgets/action_runner.dart';
 import '../../widgets/async_value_view.dart';
+import '../../widgets/open_terminal_button.dart';
 import '../../widgets/resource_card.dart';
 import '../../widgets/status_badge.dart';
 import '../resources/detail_widgets.dart';
@@ -25,6 +26,7 @@ class ServerDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(server.value?.name ?? 'Server'),
         actions: [
+          const OpenTerminalButton(),
           IconButton(
             onPressed: () => ref.invalidate(serverProvider(uuid)),
             icon: const Icon(Icons.refresh),

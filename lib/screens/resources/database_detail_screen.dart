@@ -9,6 +9,7 @@ import '../../widgets/action_runner.dart';
 import '../../widgets/async_value_view.dart';
 import '../../widgets/backups_editor.dart';
 import '../../widgets/env_var_editor.dart';
+import '../../widgets/open_terminal_button.dart';
 import '../../widgets/status_badge.dart';
 import '../../widgets/storage_editor.dart';
 import 'detail_widgets.dart';
@@ -27,6 +28,7 @@ class DatabaseDetailScreen extends ConsumerWidget {
         appBar: AppBar(
           title: Text(db.value?.name ?? 'Database'),
           actions: [
+            const OpenTerminalButton(),
             IconButton(
               onPressed: () => ref.invalidate(databaseProvider(uuid)),
               icon: const Icon(Icons.refresh),
