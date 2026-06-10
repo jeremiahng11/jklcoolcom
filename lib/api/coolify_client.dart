@@ -463,9 +463,23 @@ class CoolifyClient {
   // Persistent storages (shared across applications/databases/services)
   // ---------------------------------------------------------------------------
 
-  Future<List<Storage>> storages(String kind, String uuid) async => _list(
-    await _send('GET', '/$kind/$uuid/storages'),
-  ).map(Storage.fromJson).toList();
+  Future<List<Storage>> storages(String kind, String uuid) async {
+    final data = await _send('GET', '/$kind/$uuid/storages');
+    // The API returns an object with separate arrays, not a bare list:
+    // { "persistent_storages": [...], "file_storages": [...] }.
+    final items = <Map<String, dynamic>>[];
+    if (data is Map) {
+      for (final k in const ['persistent_storages', 'file_storages']) {
+        final arr = data[k];
+        if (arr is List) items.addAll(arr.whereType<Map<String, dynamic>>());
+      }
+      // Fall back to a `data`-wrapped or flat shape if the keys are absent.
+      if (items.isEmpty) items.addAll(_list(data));
+    } else {
+      items.addAll(_list(data));
+    }
+    return items.map(Storage.fromJson).toList();
+  }
 
   Future<void> createStorage(
     String kind,
